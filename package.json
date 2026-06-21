@@ -1,0 +1,54 @@
+{
+  "name": "nbfs",
+  "version": "1.0.0",
+  "description": "Newborn Baby Feeding Schedule - Electron desktop app",
+  "main": "src/main.js",
+  "scripts": {
+    "build:pickers": "esbuild src/picker-entry.jsx --bundle --outfile=src/picker.bundle.js --format=iife --loader:.jsx=jsx --minify",
+    "start": "npm run build:pickers && electron .",
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
+    "postinstall": "electron-rebuild -f -w better-sqlite3",
+    "dist": "npm run build:pickers && electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.nbfs.app",
+    "productName": "NBFS",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": {
+        "target": "portable",
+        "arch": [
+          "x64"
+        ]
+      }
+    }
+  },
+  "keywords": [
+    "electron",
+    "baby",
+    "feeding",
+    "tracker"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "date-fns": "^4.4.0",
+    "react": "^19.2.7",
+    "react-datepicker": "^9.1.0",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.4",
+    "electron": "^30.0.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.1"
+  }
+}

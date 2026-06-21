@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NBFS - Newborn Baby Feeding Schedule</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="picker.bundle.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-title">
+        <div class="logo">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C9.5 2 7.5 3.5 7 6C5.5 6.5 4.5 8 4.5 10C4.5 12.5 6 14.5 8 15V18C8 19.1 8.9 20 10 20H14C15.1 20 16 19.1 16 18V15C18 14.5 19.5 12.5 19.5 10C19.5 8 18.5 6.5 17 6C16.5 3.5 14.5 2 12 2ZM10 16H14V18H10V16Z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <h1>NBFS</h1>
+          <p class="subtitle">Newborn Baby Feeding Schedule</p>
+        </div>
+      </div>
+      <div class="header-goals">
+        <div class="goal-setting">
+          <label for="daily-goal">Dnevna meta:</label>
+          <div class="goal-input-wrap">
+            <input type="number" id="daily-goal" min="1" step="10" value="400">
+            <span>ml</span>
+          </div>
+        </div>
+        <div class="goal-setting">
+          <label for="avg-portion">Prosečna porcija:</label>
+          <div class="goal-input-wrap">
+            <input type="number" id="avg-portion" min="1" step="5" value="60">
+            <span>ml</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="card form-card">
+        <h2 id="form-title">Novi obrok</h2>
+        <form id="feeding-form" class="form">
+          <input type="hidden" id="feeding-id">
+          <div class="form-row">
+            <div class="field">
+              <label for="date">Datum</label>
+              <div id="date-picker" class="picker-root"></div>
+              <input type="hidden" id="date" required>
+            </div>
+            <div class="field">
+              <label for="time">Vreme početka</label>
+              <div id="time-picker" class="picker-root"></div>
+              <input type="hidden" id="time" required>
+            </div>
+            <div class="field">
+              <label for="amount">Količina (ml)</label>
+              <input type="number" id="amount" min="1" step="1" placeholder="npr. 90" required>
+            </div>
+            <div class="field">
+              <label for="duration">Trajanje (min)</label>
+              <input type="number" id="duration" min="0" step="1" placeholder="npr. 15">
+            </div>
+            <div class="field field-checkbox">
+              <label class="checkbox-label">
+                <input type="checkbox" id="vitamins">
+                <span class="checkmark"></span>
+                <span class="checkbox-text">Vitamini</span>
+              </label>
+            </div>
+            <div class="field field-checkbox">
+              <label class="checkbox-label">
+                <input type="checkbox" id="probiotic">
+                <span class="checkmark"></span>
+                <span class="checkbox-text">Probiotik</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" id="submit-btn" class="btn btn-primary"><span class="btn-icon-text">➕</span> Dodaj obrok</button>
+            <button type="button" id="cancel-btn" class="btn btn-secondary hidden"><span class="btn-icon-text">✕</span> Otkaži</button>
+          </div>
+        </form>
+      </section>
+
+      <div class="date-nav">
+        <button type="button" class="btn btn-nav" id="btn-prev">← Juče</button>
+        <button type="button" class="btn btn-nav" id="btn-today">Danas</button>
+        <button type="button" class="btn btn-nav" id="btn-next">Sutra →</button>
+        <div class="nav-picker">
+          <label for="nav-date">Izaberi datum</label>
+          <div id="nav-date-picker" class="picker-root"></div>
+          <input type="hidden" id="nav-date">
+        </div>
+      </div>
+
+      <section class="stats">
+        <div class="stat-card" id="stat-total-card">
+          <div class="stat-label">Ukupno za dan</div>
+          <div class="stat-value" id="stat-total">0 <span>ml</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Preostalo do mete</div>
+          <div class="stat-value" id="stat-remaining">0 <span>ml</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Prosek na sat</div>
+          <div class="stat-value" id="stat-hour">0 <span>ml/h</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Prosek na 3 sata</div>
+          <div class="stat-value" id="stat-3h">0 <span>ml/3h</span></div>
+        </div>
+        <div class="stat-card stat-supplements" id="stat-supplements-card">
+          <div class="stat-label">Vitamini & Probiotik</div>
+          <div class="stat-value" id="stat-supplements">0/2</div>
+        </div>
+      </section>
+
+      <section class="card projection-card">
+        <div class="projection-header">
+          <h2>📅 Projekcija do kraja dana</h2>
+          <button type="button" id="btn-refresh-projection" class="btn btn-nav"><span class="btn-icon-text">🔄</span> Osveži</button>
+        </div>
+        <div class="projection-grid">
+          <div class="projection-item">
+            <div class="projection-label">Obroka do mete</div>
+            <div class="projection-value" id="proj-meals">—</div>
+          </div>
+          <div class="projection-item">
+            <div class="projection-label">Obroka do ponoći</div>
+            <div class="projection-value" id="proj-meals-until-midnight">—</div>
+          </div>
+          <div class="projection-item projection-meals">
+            <div class="projection-label">Predloženi obroci</div>
+            <div class="projection-value projection-meal-list" id="proj-meal-list">—</div>
+          </div>
+          <div class="projection-item">
+            <div class="projection-label">Preporučena količina</div>
+            <div class="projection-value" id="proj-amount">—</div>
+          </div>
+          <div class="projection-item">
+            <div class="projection-label">Predviđeno ukupno obroka</div>
+            <div class="projection-value" id="proj-total-meals">—</div>
+          </div>
+        </div>
+        <p class="projection-note" id="proj-note">Unesi prosečnu porciju da bi videli preporuku.</p>
+      </section>
+
+      <section class="card list-card">
+        <div class="list-header">
+          <h2>Obroci za <span id="list-date-label"></span></h2>
+          <span class="badge" id="list-count">0 obroka</span>
+        </div>
+        <div id="feedings-list" class="feedings-list">
+          <p class="empty-state">Nema unetih obroka za izabrani dan.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="confirm-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-icon">🗑️</div>
+      <h3 id="confirm-title">Brisanje obroka</h3>
+      <p id="confirm-message">Da li si siguran da želiš da obrišeš ovaj obrok?</p>
+      <div class="modal-actions">
+        <button type="button" id="confirm-cancel" class="btn btn-secondary"><span class="btn-icon-text">✕</span> Otkaži</button>
+        <button type="button" id="confirm-ok" class="btn btn-danger"><span class="btn-icon-text">🗑️</span> Obriši</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="picker.bundle.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

@@ -49,12 +49,14 @@ Kartica **Ukupno za dan** menja boju u zavisnosti od toga kako stojiš sa dnevno
 
 ### Projekcija do kraja dana
 Na osnovu **dnevne mete**, **prosečne porcije** i poslednjeg obroka, aplikacija live predlaže:
-- **Obroka do mete** — koliko obroka je potrebno da se dostigne meta
-- **Obroka do ponoći** — koliko obroka stane do ponoći sa razmakom od 3 sata
-- **Predloženi obroci** — lista vremena narednih obroka
-- **Preporučena količina** — po koliko ml treba dati u preostalim obrocima
+- **Obroka do mete** — koliko obroka je potrebno da se popije preostala količina bez prevelikih porcija
+- **Interval između obroka** — prilagođeni razmak do ponoći (manji od 3 sata kada je potrebno)
+- **Predlog vremena obroka** — lista vremena narednih obroka (jedno ispod drugog)
+- **Preporučena količina** — raspodeljena količina po obrocima, prikazana jedna ispod druge (npr. `40 ml`, `39 ml`)
 - **Predviđeno ukupno obroka** — koliko će ukupno biti obroka tog dana
-- Ako obroci ne staju do ponoći, aplikacija automatski smanjuje broj obroka i povećava količinu da bi meta bila dostignuta do ponoći
+- Aplikacija prvo pokušava da rasporedi preostalu količinu u više manjih obroka sa smanjenim razmakom; broj obroka se smanjuje samo ako razmak postane prekratak (ispod 1 sata)
+- Ako je preostala količina prevelika za realan broj obroka do ponoći, prikazuje se upozorenje
+- Ako nije unet nijedan obrok za izabrani dan, **Predlog vremena obroka** prikazuje `—`, a **Preporučena količina** prikazuje samo prosečnu porciju
 - Ako je ponoć izabranog datuma već prošla u odnosu na trenutno vreme, projekcija prikazuje `0` preostalih obroka i odgovarajuću poruku
 
 ### Ostale funkcije

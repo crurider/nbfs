@@ -35,7 +35,7 @@ const projTotalMeals = document.getElementById('proj-total-meals');
 const projNote = document.getElementById('proj-note');
 const btnRefreshProjection = document.getElementById('btn-refresh-projection');
 
-const INTERVAL_HOURS = 3;
+const MIN_INTERVAL_HOURS = 1.0;
 
 let currentAvgPortion = 60;
 
@@ -88,21 +88,53 @@ function formatTimeRange(datetime, durationMin) {
   return `${start} → ${end}`;
 }
 
-function generateMealList(lastFeeding, mealsRemaining) {
-  if (!lastFeeding || mealsRemaining <= 0) return '—';
-  const times = [];
-  const date = new Date(lastFeeding);
-  for (let i = 0; i < mealsRemaining; i++) {
-    date.setHours(date.getHours() + INTERVAL_HOURS);
-    times.push(`${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`);
+function distributeAmount(total, count) {
+  const base = Math.floor(total / count);
+  const extra = total - base * count;
+  const amounts = [];
+  for (let i = 0; i < count; i++) {
+    amounts.push(i < extra ? base + 1 : base);
   }
-  return times.map(t => `<span class="meal-time">${t}</span>`).join('');
+  return amounts;
 }
 
-function formatNextTime(datetime) {
-  const date = new Date(datetime);
-  date.setHours(date.getHours() + 3);
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+function formatAmountsPlain(amounts) {
+  if (amounts.length === 0) return '0 ml';
+  if (amounts.every(a => a === amounts[0])) {
+    return `po ${amounts[0]} ml`;
+  }
+  return amounts.map(a => `${a} ml`).join(' + ');
+}
+
+function formatAmountsHtml(amounts) {
+  if (amounts.length === 0) return '—';
+  return amounts.map(a => `<span class="meal-amount">${a} ml</span>`).join('');
+}
+
+function formatInterval(minutes) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h} h`;
+  return `${h} h ${m} min`;
+}
+
+function formatNextTime(lastFeeding, intervalMinutes, count) {
+  const date = new Date(lastFeeding);
+  date.setMinutes(date.getMinutes() + intervalMinutes * count);
+  return formatTimeFromDate(date);
+}
+
+function generateMealList(lastFeeding, mealsRemaining, intervalMinutes) {
+  if (!lastFeeding || mealsRemaining <= 0) return '—';
+  const items = [];
+  const start = new Date(lastFeeding);
+  for (let i = 0; i < mealsRemaining; i++) {
+    const date = new Date(start.getTime() + (i + 1) * intervalMinutes * 60 * 1000);
+    const time = formatTimeFromDate(date);
+    items.push(`<span class="meal-time">${time}</span>`);
+  }
+  return items.join('');
 }
 
 function round(value) {
@@ -291,18 +323,13 @@ function renderProjection(feedings, stats) {
 
     if (remaining <= 0) {
       projMeals.textContent = '0';
-      projMealsUntilMidnight.textContent = '0';
+      projMealsUntilMidnight.textContent = '—';
       projMealList.innerHTML = '—';
       projAmount.textContent = '0 ml';
       projTotalMeals.textContent = String(stats.count);
       projNote.textContent = '🎉 Dnevna meta je dostignuta!';
       return;
     }
-
-    const mealsForGoal = Math.max(1, Math.ceil(remaining / avgPortion));
-
-    let mealsUntilMidnight = 0;
-    let lastMealBeforeMidnight = null;
 
     const selectedDate = dateInput.value;
     const midnight = new Date(selectedDate + 'T00:00:00');
@@ -311,7 +338,7 @@ function renderProjection(feedings, stats) {
     const now = new Date();
     if (now >= midnight) {
       projMeals.textContent = '0';
-      projMealsUntilMidnight.textContent = '0';
+      projMealsUntilMidnight.textContent = '—';
       projMealList.innerHTML = '—';
       projAmount.textContent = '—';
       projTotalMeals.textContent = String(stats.count);
@@ -330,17 +357,9 @@ function renderProjection(feedings, stats) {
     }
 
     const hoursUntilMidnight = (midnight - lastFeeding) / (1000 * 60 * 60);
-    mealsUntilMidnight = Math.max(0, Math.floor(hoursUntilMidnight / INTERVAL_HOURS));
-
-    if (mealsUntilMidnight > 0) {
-      const t = new Date(lastFeeding);
-      t.setHours(t.getHours() + mealsUntilMidnight * INTERVAL_HOURS);
-      lastMealBeforeMidnight = formatTimeFromDate(t);
-    }
-
-    if (mealsUntilMidnight === 0) {
+    if (hoursUntilMidnight <= 0) {
       projMeals.textContent = '0';
-      projMealsUntilMidnight.textContent = '0';
+      projMealsUntilMidnight.textContent = '—';
       projMealList.innerHTML = '—';
       projAmount.textContent = '—';
       projTotalMeals.textContent = String(stats.count);
@@ -348,20 +367,37 @@ function renderProjection(feedings, stats) {
       return;
     }
 
-    const mealsRemaining = Math.min(mealsForGoal, mealsUntilMidnight);
-    const recommendedAmount = Math.round(remaining / mealsRemaining);
+    // Početni broj obroka potreban da se popije preostala količina bez prevelikih porcija
+    let mealsRemaining = Math.max(1, Math.ceil(remaining / avgPortion));
+
+    // Smanjujemo broj obroka samo ako bi razmak bio prekratak
+    while (mealsRemaining > 1 && hoursUntilMidnight / mealsRemaining < MIN_INTERVAL_HOURS) {
+      mealsRemaining--;
+    }
+
+    const intervalHours = hoursUntilMidnight / mealsRemaining;
+    const intervalMinutes = Math.round(intervalHours * 60);
+    const amounts = distributeAmount(remaining, mealsRemaining);
     const totalMeals = stats.count + mealsRemaining;
+    const lastMealTime = formatNextTime(lastFeeding, intervalMinutes, mealsRemaining);
 
     projMeals.textContent = String(mealsRemaining);
-    projMealsUntilMidnight.textContent = String(mealsUntilMidnight);
-    projMealList.innerHTML = generateMealList(feedings.length > 0 ? feedings[feedings.length - 1].datetime : null, mealsRemaining);
-    projAmount.textContent = `${recommendedAmount} ml`;
+    projMealsUntilMidnight.textContent = formatInterval(intervalMinutes);
+    projMealList.innerHTML = generateMealList(feedings.length > 0 ? feedings[feedings.length - 1].datetime : null, mealsRemaining, intervalMinutes);
+    projAmount.innerHTML = feedings.length === 0
+      ? `<span class="meal-amount">${avgPortion} ml</span>`
+      : formatAmountsHtml(amounts);
     projTotalMeals.textContent = String(totalMeals);
 
-    if (mealsForGoal <= mealsUntilMidnight) {
-      projNote.textContent = `✅ Svi preostali obroci (${mealsRemaining}) staju do ponoći.`;
+    const idealMeals = Math.max(1, Math.ceil(remaining / avgPortion));
+    if (feedings.length === 0) {
+      projNote.textContent = `ℹ️ Unesi prvi obrok da bi video detaljan raspored do ponoći. Preporučena količina po obroku: ${avgPortion} ml.`;
+    } else if (mealsRemaining === 1 && remaining > avgPortion * 2) {
+      projNote.textContent = `⚠️ Preostala količina (${remaining} ml) je prevelika za jedan obrok. Meta verovatno ne može biti dostignuta na realan način do ponoći.`;
+    } else if (idealMeals > mealsRemaining) {
+      projNote.textContent = `⚠️ Da meta bude dostignuta do ponoći, rasporedi preostalu količinu u ${mealsRemaining} obroka (${formatAmountsPlain(amounts)}). Razmak između obroka: ${formatInterval(intervalMinutes)}. Poslednji obrok oko ${lastMealTime}.`;
     } else {
-      projNote.textContent = `⚠️ Da meta bude dostignuta do ponoći, smanji na ${mealsRemaining} obroka i daj po ${recommendedAmount} ml. Poslednji obrok do ponoći oko ${lastMealBeforeMidnight}.`;
+      projNote.textContent = `✅ Preostali obroci (${mealsRemaining}) se uklapaju do ponoći. Razmak između obroka: ${formatInterval(intervalMinutes)}.`;
     }
   } catch (err) {
     console.error(err);

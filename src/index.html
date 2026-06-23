@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NBFS - Newborn Baby Feeding Schedule</title>
+  <link rel="stylesheet" href="../node_modules/@fortawesome/fontawesome-free/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="picker.bundle.css">
 </head>
@@ -79,16 +80,16 @@
             </div>
           </div>
           <div class="form-actions">
-            <button type="submit" id="submit-btn" class="btn btn-primary"><span class="btn-icon-text">➕</span> Dodaj obrok</button>
-            <button type="button" id="cancel-btn" class="btn btn-secondary hidden"><span class="btn-icon-text">✕</span> Otkaži</button>
+            <button type="submit" id="submit-btn" class="btn btn-primary"><i class="fas fa-plus"></i> Dodaj obrok</button>
+            <button type="button" id="cancel-btn" class="btn btn-secondary hidden"><i class="fas fa-xmark"></i> Otkaži</button>
           </div>
         </form>
       </section>
 
       <div class="date-nav">
-        <button type="button" class="btn btn-nav" id="btn-prev">← Juče</button>
+        <button type="button" class="btn btn-nav" id="btn-prev"><i class="fas fa-arrow-left"></i> Juče</button>
         <button type="button" class="btn btn-nav" id="btn-today">Danas</button>
-        <button type="button" class="btn btn-nav" id="btn-next">Sutra →</button>
+        <button type="button" class="btn btn-nav" id="btn-next">Sutra <i class="fas fa-arrow-right"></i></button>
         <div class="nav-picker">
           <label for="nav-date">Izaberi datum</label>
           <div id="nav-date-picker" class="picker-root"></div>
@@ -121,8 +122,8 @@
 
       <section class="card projection-card">
         <div class="projection-header">
-          <h2>📅 Projekcija do kraja dana</h2>
-          <button type="button" id="btn-refresh-projection" class="btn btn-nav"><span class="btn-icon-text">🔄</span> Osveži</button>
+          <h2><i class="fas fa-calendar-days"></i> Projekcija do kraja dana</h2>
+          <button type="button" id="btn-refresh-projection" class="btn btn-nav"><i class="fas fa-rotate"></i> Osveži</button>
         </div>
         <div class="projection-grid">
           <div class="projection-item">
@@ -164,12 +165,12 @@
   <div id="confirm-modal" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-content">
-      <div class="modal-icon">🗑️</div>
+      <div class="modal-icon"><i class="fas fa-triangle-exclamation"></i></div>
       <h3 id="confirm-title">Brisanje obroka</h3>
       <p id="confirm-message">Da li si siguran da želiš da obrišeš ovaj obrok?</p>
       <div class="modal-actions">
-        <button type="button" id="confirm-cancel" class="btn btn-secondary"><span class="btn-icon-text">✕</span> Otkaži</button>
-        <button type="button" id="confirm-ok" class="btn btn-danger"><span class="btn-icon-text">🗑️</span> Obriši</button>
+        <button type="button" id="confirm-cancel" class="btn btn-secondary"><i class="fas fa-xmark"></i> Otkaži</button>
+        <button type="button" id="confirm-ok" class="btn btn-danger"><i class="fas fa-trash-can"></i> Obriši</button>
       </div>
     </div>
   </div>

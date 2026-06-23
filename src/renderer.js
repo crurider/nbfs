@@ -85,7 +85,16 @@ function formatTimeRange(datetime, durationMin) {
   const start = formatTime(datetime);
   if (!durationMin) return start;
   const end = formatEndTime(datetime, durationMin);
-  return `${start} → ${end}`;
+  return `${start} <i class="fas fa-arrow-right"></i> ${end}`;
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function distributeAmount(total, count) {
@@ -228,31 +237,31 @@ function getIndicator(amount) {
 function getFeedingTags(f) {
   const tags = [];
   if (f.duration_min > 0) {
-    tags.push(`<span class="tag tag-duration" title="Trajanje obroka">⏱️ ${f.duration_min} min</span>`);
+    tags.push(`<span class="tag tag-duration" title="Trajanje obroka"><i class="fas fa-stopwatch"></i> ${f.duration_min} min</span>`);
   }
   if (f.vitamins) {
-    tags.push(`<span class="tag tag-vitamins" title="Dati vitamini">🩹 Vitamini</span>`);
+    tags.push(`<span class="tag tag-vitamins" title="Dati vitamini"><i class="fas fa-pills"></i> Vitamini</span>`);
   }
   if (f.probiotic) {
-    tags.push(`<span class="tag tag-probiotic" title="Dat probiotik">🦠 Probiotik</span>`);
+    tags.push(`<span class="tag tag-probiotic" title="Dat probiotik"><i class="fas fa-bacterium"></i> Probiotik</span>`);
   }
   return tags.length > 0 ? `<div class="feeding-tags">${tags.join('')}</div>` : '';
 }
 
-function showConfirm({ title = 'Potvrda', message, icon = '🗑️', okText = 'Potvrdi', cancelText = 'Otkaži', danger = false, okIcon = null, cancelIcon = '✕' }) {
+function showConfirm({ title = 'Potvrda', message, icon = 'triangle-exclamation', okText = 'Potvrdi', cancelText = 'Otkaži', danger = false, okIcon = null, cancelIcon = 'xmark' }) {
   return new Promise((resolve) => {
     confirmTitle.textContent = title;
     confirmMessage.textContent = message;
-    confirmIcon.textContent = icon;
+    confirmIcon.innerHTML = `<i class="fas fa-${icon}"></i>`;
 
-    const okIconChar = okIcon || (danger ? '🗑️' : '✓');
-    confirmOk.innerHTML = `<span class="btn-icon-text">${okIconChar}</span> ${okText}`;
+    const okIconClass = okIcon || (danger ? 'trash-can' : 'check');
+    confirmOk.innerHTML = `<i class="fas fa-${okIconClass}"></i> ${okText}`;
 
     if (cancelText === null) {
       confirmCancel.classList.add('hidden');
     } else {
       confirmCancel.classList.remove('hidden');
-      confirmCancel.innerHTML = `<span class="btn-icon-text">${cancelIcon}</span> ${cancelText}`;
+      confirmCancel.innerHTML = `<i class="fas fa-${cancelIcon}"></i> ${cancelText}`;
     }
 
     confirmOk.className = danger ? 'btn btn-danger' : 'btn btn-primary';
@@ -282,8 +291,8 @@ function showConfirm({ title = 'Potvrda', message, icon = '🗑️', okText = 'P
   });
 }
 
-function showAlert({ title = 'Obaveštenje', message, icon = 'ℹ️' }) {
-  return showConfirm({ title, message, icon, okText: 'U redu', cancelText: null, okIcon: '✓' });
+function showAlert({ title = 'Obaveštenje', message, icon = 'circle-info' }) {
+  return showConfirm({ title, message, icon, okText: 'U redu', cancelText: null, okIcon: 'check' });
 }
 
 function renderStats(stats) {
@@ -327,7 +336,7 @@ function renderProjection(feedings, stats) {
       projMealList.innerHTML = '—';
       projAmount.textContent = '0 ml';
       projTotalMeals.textContent = String(stats.count);
-      projNote.textContent = '🎉 Dnevna meta je dostignuta!';
+      projNote.innerHTML = '<i class="fas fa-circle-check"></i> Dnevna meta je dostignuta!';
       return;
     }
 
@@ -342,7 +351,7 @@ function renderProjection(feedings, stats) {
       projMealList.innerHTML = '—';
       projAmount.textContent = '—';
       projTotalMeals.textContent = String(stats.count);
-      projNote.textContent = '⚠️ Ponoć je već prošla. Meta za ovaj dan se više ne može dostiči do ponoći.';
+      projNote.innerHTML = '<i class="fas fa-triangle-exclamation"></i> Ponoć je već prošla. Meta za ovaj dan se više ne može dostiči do ponoći.';
       return;
     }
 
@@ -363,7 +372,7 @@ function renderProjection(feedings, stats) {
       projMealList.innerHTML = '—';
       projAmount.textContent = '—';
       projTotalMeals.textContent = String(stats.count);
-      projNote.textContent = '⚠️ Do ponoći ne staje nijedan obrok. Meta ne može biti dostignuta do ponoći, ali možeš nastaviti sutra.';
+      projNote.innerHTML = '<i class="fas fa-triangle-exclamation"></i> Do ponoći ne staje nijedan obrok. Meta ne može biti dostignuta do ponoći, ali možeš nastaviti sutra.';
       return;
     }
 
@@ -391,13 +400,13 @@ function renderProjection(feedings, stats) {
 
     const idealMeals = Math.max(1, Math.ceil(remaining / avgPortion));
     if (feedings.length === 0) {
-      projNote.textContent = `ℹ️ Unesi prvi obrok da bi video detaljan raspored do ponoći. Preporučena količina po obroku: ${avgPortion} ml.`;
+      projNote.innerHTML = `<i class="fas fa-circle-info"></i> Unesi prvi obrok da bi video detaljan raspored do ponoći. Preporučena količina po obroku: ${avgPortion} ml.`;
     } else if (mealsRemaining === 1 && remaining > avgPortion * 2) {
-      projNote.textContent = `⚠️ Preostala količina (${remaining} ml) je prevelika za jedan obrok. Meta verovatno ne može biti dostignuta na realan način do ponoći.`;
+      projNote.innerHTML = `<i class="fas fa-triangle-exclamation"></i> Preostala količina (${remaining} ml) je prevelika za jedan obrok. Meta verovatno ne može biti dostignuta na realan način do ponoći.`;
     } else if (idealMeals > mealsRemaining) {
-      projNote.textContent = `⚠️ Da meta bude dostignuta do ponoći, rasporedi preostalu količinu u ${mealsRemaining} obroka (${formatAmountsPlain(amounts)}). Razmak između obroka: ${formatInterval(intervalMinutes)}. Poslednji obrok oko ${lastMealTime}.`;
+      projNote.innerHTML = `<i class="fas fa-triangle-exclamation"></i> Da meta bude dostignuta do ponoći, rasporedi preostalu količinu u ${mealsRemaining} obroka (${formatAmountsPlain(amounts)}). Razmak između obroka: ${formatInterval(intervalMinutes)}. Poslednji obrok oko ${lastMealTime}.`;
     } else {
-      projNote.textContent = `✅ Preostali obroci (${mealsRemaining}) se uklapaju do ponoći. Razmak između obroka: ${formatInterval(intervalMinutes)}.`;
+      projNote.innerHTML = `<i class="fas fa-check"></i> Preostali obroci (${mealsRemaining}) se uklapaju do ponoći. Razmak između obroka: ${formatInterval(intervalMinutes)}.`;
     }
   } catch (err) {
     console.error(err);
@@ -406,7 +415,7 @@ function renderProjection(feedings, stats) {
     projMealList.innerHTML = '—';
     projAmount.textContent = '—';
     projTotalMeals.textContent = '—';
-    projNote.textContent = '⚠️ Greška u projekciji: ' + err.message;
+    projNote.innerHTML = '<i class="fas fa-triangle-exclamation"></i> Greška u projekciji: ' + escapeHtml(err.message);
   }
 }
 
@@ -426,15 +435,15 @@ function renderFeedings(feedings) {
     item.innerHTML = `
       <div class="feeding-info">
         <div class="feeding-main">
-          <div class="feeding-time" title="Početak → kraj obroka">${formatTimeRange(f.datetime, f.duration_min)}</div>
+          <div class="feeding-time" title="Početak do kraja obroka">${formatTimeRange(f.datetime, f.duration_min)}</div>
           <div class="feeding-amount">${f.amount_ml} ml</div>
           ${getIndicator(f.amount_ml)}
         </div>
         ${getFeedingTags(f)}
       </div>
       <div class="feeding-actions">
-        <button class="btn-icon edit" data-id="${f.id}" title="Izmeni">✏️</button>
-        <button class="btn-icon delete" data-id="${f.id}" title="Obriši">🗑️</button>
+        <button class="btn-icon edit" data-id="${f.id}" title="Izmeni"><i class="fas fa-pen"></i></button>
+        <button class="btn-icon delete" data-id="${f.id}" title="Obriši"><i class="fas fa-trash-can"></i></button>
       </div>
     `;
     feedingsList.appendChild(item);
@@ -492,7 +501,7 @@ form.addEventListener('submit', async (e) => {
     await showAlert({
       title: 'Greška',
       message: 'Došlo je do greške pri čuvanju obroka.',
-      icon: '⚠️'
+      icon: 'triangle-exclamation'
     });
   }
 });
@@ -504,8 +513,8 @@ function resetForm() {
   vitaminsInput.checked = false;
   probioticInput.checked = false;
   formTitle.textContent = 'Novi obrok';
-  submitBtn.innerHTML = '<span class="btn-icon-text">➕</span> Dodaj obrok';
-  cancelBtn.innerHTML = '<span class="btn-icon-text">✕</span> Otkaži';
+  submitBtn.innerHTML = '<i class="fas fa-plus"></i> Dodaj obrok';
+  cancelBtn.innerHTML = '<i class="fas fa-xmark"></i> Otkaži';
   cancelBtn.classList.add('hidden');
   setCurrentTime();
 }
@@ -521,7 +530,7 @@ feedingsList.addEventListener('click', async (e) => {
     const confirmed = await showConfirm({
       title: 'Brisanje obroka',
       message: 'Da li si siguran da želiš da obrišeš ovaj obrok?',
-      icon: '🗑️',
+      icon: 'trash-can',
       okText: 'Obriši',
       danger: true
     });
@@ -535,7 +544,7 @@ feedingsList.addEventListener('click', async (e) => {
       await showAlert({
         title: 'Greška',
         message: 'Došlo je do greške pri brisanju.',
-        icon: '⚠️'
+        icon: 'triangle-exclamation'
       });
     }
   } else if (btn.classList.contains('edit')) {
@@ -555,8 +564,8 @@ feedingsList.addEventListener('click', async (e) => {
     vitaminsInput.checked = !!f.vitamins;
     probioticInput.checked = !!f.probiotic;
     formTitle.textContent = 'Izmeni obrok';
-    submitBtn.innerHTML = '<span class="btn-icon-text">✓</span> Sačuvaj izmene';
-    cancelBtn.innerHTML = '<span class="btn-icon-text">✕</span> Otkaži';
+    submitBtn.innerHTML = '<i class="fas fa-check"></i> Sačuvaj izmene';
+    cancelBtn.innerHTML = '<i class="fas fa-xmark"></i> Otkaži';
     cancelBtn.classList.remove('hidden');
   }
 });

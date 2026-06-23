@@ -128,6 +128,7 @@ NBFS/
 - **better-sqlite3** za SQLite bazu
 - **electron-builder** za pakovanje portable `.exe`
 - **React** + **react-datepicker** + **date-fns** za custom date/time pickere
+- **Font Awesome** za ikonice
 - **esbuild** za bundle-ovanje picker komponenti
 - Baza se čuva u Electron-ovom `userData` folderu (`nbfs.db`)
 - Prozor se automatski pokreće maximizovan

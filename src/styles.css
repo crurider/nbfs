@@ -253,10 +253,11 @@ h1 {
 }
 
 .checkbox-label input:checked + .checkmark::after {
-  content: '✓';
+  content: '\f00c';
+  font-family: 'Font Awesome 7 Free';
+  font-weight: 900;
   color: white;
   font-size: 14px;
-  font-weight: 800;
 }
 
 .form-actions {
@@ -279,7 +280,7 @@ h1 {
   transform: scale(0.97);
 }
 
-.btn-icon-text {
+.btn i {
   margin-right: 7px;
   display: inline-block;
 }

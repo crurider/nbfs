@@ -39,6 +39,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.2.0",
     "better-sqlite3": "^11.0.0",
     "date-fns": "^4.4.0",
     "react": "^19.2.7",

@@ -33,6 +33,7 @@ Jednostavna desktop aplikacija za praćenje unosa mleka kod novorođenčadi. Raz
 - [Electron](https://www.electronjs.org/) 30
 - [better-sqlite3](https://github.com/WiseLibs/better-sqlite3)
 - [React](https://react.dev/) + [react-datepicker](https://reactdatepicker.com/) + [date-fns](https://date-fns.org/)
+- [Font Awesome](https://fontawesome.com/) — ikonice
 - [esbuild](https://esbuild.github.io/)
 - [electron-builder](https://www.electron.build/)
 

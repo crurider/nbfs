@@ -6,18 +6,20 @@
   "scripts": {
     "build:pickers": "esbuild src/picker-entry.jsx --bundle --outfile=src/picker.bundle.js --format=iife --loader:.jsx=jsx --minify",
     "start": "npm run build:pickers && electron .",
-    "rebuild": "electron-rebuild -f -w better-sqlite3",
-    "postinstall": "electron-rebuild -f -w better-sqlite3",
+    "rebuild": "electron-builder install-app-deps",
+    "postinstall": "electron-builder install-app-deps",
     "dist": "npm run build:pickers && electron-builder --win portable"
   },
   "build": {
     "appId": "com.nbfs.app",
     "productName": "NBFS",
+    "icon": "build/icon.png",
     "directories": {
       "output": "dist"
     },
     "files": [
       "src/**/*",
+      "build/**/*",
       "node_modules/**/*",
       "package.json"
     ],
@@ -47,9 +49,9 @@
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
-    "@electron/rebuild": "^4.0.4",
     "electron": "^30.0.0",
     "electron-builder": "^26.15.3",
-    "esbuild": "^0.28.1"
+    "esbuild": "^0.28.1",
+    "sharp": "^0.35.2"
   }
 }

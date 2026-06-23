@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NBFS - Newborn Baby Feeding Schedule</title>
+  <script>
+    (function () {
+      const theme = localStorage.getItem('nbfs-theme') || 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
   <link rel="stylesheet" href="../node_modules/@fortawesome/fontawesome-free/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="picker.bundle.css">
@@ -36,6 +42,13 @@
             <input type="number" id="avg-portion" min="1" step="5" value="60">
             <span>ml</span>
           </div>
+        </div>
+        <div class="theme-switch" id="theme-switch" role="button" tabindex="0" aria-label="Prebaci između svetle i tamne teme">
+          <i class="fas fa-sun"></i>
+          <div class="theme-switch-track">
+            <div class="theme-switch-thumb"></div>
+          </div>
+          <i class="fas fa-moon"></i>
         </div>
       </div>
     </header>

@@ -34,6 +34,7 @@ const projAmount = document.getElementById('proj-amount');
 const projTotalMeals = document.getElementById('proj-total-meals');
 const projNote = document.getElementById('proj-note');
 const btnRefreshProjection = document.getElementById('btn-refresh-projection');
+const themeSwitch = document.getElementById('theme-switch');
 
 const MIN_INTERVAL_HOURS = 1.0;
 
@@ -599,7 +600,30 @@ btnToday.addEventListener('click', () => {
 btnNext.addEventListener('click', () => changeDate(1));
 btnRefreshProjection.addEventListener('click', () => refresh());
 
+function loadTheme() {
+  const saved = localStorage.getItem('nbfs-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = current === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('nbfs-theme', next);
+}
+
+if (themeSwitch) {
+  themeSwitch.addEventListener('click', toggleTheme);
+  themeSwitch.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleTheme();
+    }
+  });
+}
+
 (async () => {
+  loadTheme();
   setToday();
   mountPickers();
   await loadGoal();

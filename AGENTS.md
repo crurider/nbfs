@@ -67,6 +67,7 @@ Na osnovu **dnevne mete**, **prosečne porcije** i poslednjeg obroka, aplikacija
   - 🟢 zelena strelica — više od `40 ml`
   - bez oznake — tačno `40 ml`
 - **Custom confirm modal** — umesto ugrađenih browser dijaloga
+- **Dark tema** — prebacivanje između svetle i tamne teme preko switch-a u headeru
 - **Aplikacija se pokreće maximizovana**
 - **SQLite baza** lokalno u Electron-ovom `userData` folderu (`nbfs.db`)
 

@@ -27,6 +27,7 @@ Jednostavna desktop aplikacija za praćenje unosa mleka kod novorođenčadi. Raz
   - kada nije unet nijedan obrok, prikazuje samo preporučenu količinu po obroku
 - **React date/time picker-i** — lokalizovani na srpski, format datuma `DD.MM.YYYY`, prvi dan u nedelji je ponedeljak
 - **Podesive vrednosti** — dnevna meta i prosečna porcija
+- **Dark tema** — prebacivanje između svetle i tamne teme preko switch-a u headeru
 
 ## Tehnologije
 

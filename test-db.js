@@ -51,7 +51,7 @@ eq(stats.count, 3, 'Count should be 3');
 eq(stats.goal, 500, 'Goal should be 500');
 eq(stats.remaining, 270, 'Remaining should be 270');
 eq(Math.round(stats.avgPerHour * 10) / 10, 41.8, 'Avg per hour');
-eq(Math.round(stats.avgPer3Hours * 10) / 10, 125.5, 'Avg per 3 hours');
+eq(Math.round(stats.avgPerMeal * 10) / 10, 76.7, 'Avg per meal');
 eq(stats.supplementsTaken, 2, 'Supplements should be 2/2');
 
 // Update feeding
@@ -65,7 +65,7 @@ eq(feedings[1].duration_min, 15, 'Updated feeding duration');
 stats = db.getStats(date);
 eq(stats.total, 240, 'Total after update');
 eq(Math.round(stats.avgPerHour * 10) / 10, 43.6, 'Avg per hour after update');
-eq(Math.round(stats.avgPer3Hours * 10) / 10, 130.9, 'Avg per 3 hours after update');
+eq(Math.round(stats.avgPerMeal * 10) / 10, 80, 'Avg per meal after update');
 
 // Delete feeding
 db.deleteFeeding(id3);
@@ -75,13 +75,14 @@ eq(feedings.length, 2, 'Should have 2 feedings after delete');
 stats = db.getStats(date);
 eq(stats.total, 160, 'Total after delete');
 eq(Math.round(stats.avgPerHour * 10) / 10, 53.3, 'Avg per hour after delete');
-eq(Math.round(stats.avgPer3Hours * 10) / 10, 160, 'Avg per 3 hours after delete');
+eq(Math.round(stats.avgPerMeal * 10) / 10, 80, 'Avg per meal after delete');
 eq(stats.supplementsTaken, 1, 'Supplements should be 1/2 after delete');
 
 // Empty date
 const emptyStats = db.getStats('2020-01-01');
 eq(emptyStats.total, 0, 'Empty date total');
 eq(emptyStats.avgPerHour, 0, 'Empty date avg per hour');
+eq(emptyStats.avgPerMeal, 0, 'Empty date avg per meal');
 
 // Cleanup
 db.close();

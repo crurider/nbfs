@@ -23,7 +23,7 @@ const statTotal = document.getElementById('stat-total');
 const statTotalCard = document.getElementById('stat-total-card');
 const statRemaining = document.getElementById('stat-remaining');
 const statHour = document.getElementById('stat-hour');
-const stat3h = document.getElementById('stat-3h');
+const statAvgMeal = document.getElementById('stat-avg-meal');
 const statSupplements = document.getElementById('stat-supplements');
 const statSupplementsCard = document.getElementById('stat-supplements-card');
 
@@ -300,7 +300,7 @@ function renderStats(stats) {
   statTotal.innerHTML = `${stats.total} <span>ml</span>`;
   statRemaining.innerHTML = `${stats.remaining} <span>ml</span>`;
   statHour.innerHTML = `${round(stats.avgPerHour)} <span>ml/h</span>`;
-  stat3h.innerHTML = `${round(stats.avgPer3Hours)} <span>ml/3h</span>`;
+  statAvgMeal.innerHTML = `${round(stats.avgPerMeal)} <span>ml</span>`;
 
   statTotalCard.classList.remove('success', 'warning', 'danger');
   const diff = stats.goal - stats.total;

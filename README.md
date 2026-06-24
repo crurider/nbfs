@@ -15,7 +15,7 @@ Jednostavna desktop aplikacija za praćenje unosa mleka kod novorođenčadi. Raz
   - Ukupno za dan
   - Preostalo do dnevne mete
   - Prosek na sat
-  - Prosek na 3 sata
+  - Prosek po obroku
   - Vitamini & Probiotik (`0/2`, `1/2`, `2/2`)
 - **Indikacija ukupnog unosa po bojama** — zelena (meta dostignuta), žuta (manje od 50 ml do mete), crvena (više od 50 ml do mete)
 - **Projekcija do kraja dana** — na osnovu preostale količine, prosečne porcije i poslednjeg obroka predlaže:

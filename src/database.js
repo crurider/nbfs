@@ -110,7 +110,7 @@ function initDatabase(dbPath) {
     }
 
     const avgPerHour = count > 0 ? total / hoursActive : 0;
-    const avgPer3Hours = count > 0 ? avgPerHour * 3 : 0;
+    const avgPerMeal = count > 0 ? total / count : 0;
     const goal = getDailyGoal();
     const vitaminsTaken = rows.some(r => r.vitamins) ? 1 : 0;
     const probioticTaken = rows.some(r => r.probiotic) ? 1 : 0;
@@ -119,7 +119,7 @@ function initDatabase(dbPath) {
       total,
       count,
       avgPerHour,
-      avgPer3Hours,
+      avgPerMeal,
       goal,
       remaining: Math.max(0, goal - total),
       supplementsTaken

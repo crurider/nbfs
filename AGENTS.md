@@ -38,7 +38,7 @@ Umesto nativnih browser kontrola, aplikacija koristi **React** pickere (`react-d
 | **Ukupno za dan** | Ukupno popijeno mleko tog dana |
 | **Preostalo do mete** | Koliko ml fali do dnevne mete |
 | **Prosek na sat** | `ukupno ml / broj sati od prvog do poslednjeg obroka` (fallback: 24h) |
-| **Prosek na 3 sata** | `prosek na sat × 3` |
+| **Prosek po obroku** | `ukupno ml / broj obroka` tog dana |
 | **Vitamini & Probiotik** | `0/2`, `1/2` ili `2/2` — zeleno kad je `2/2`, crveno inače |
 
 ### Bojna indikacija ukupnog unosa

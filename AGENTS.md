@@ -15,7 +15,7 @@ Sve kontrole za unos obroka nalaze se u **jednom redu** sa ravnomernim razmacima
 
 ### CRUD operacije
 - **Dodaj** novi obrok
-- **Izmeni** postojeći obrok
+- **Izmeni** postojeći obrok — klik na edit u listi automatski scroll-uje na vrh forme za unos
 - **Obriši** obrok (sa custom confirm modalom)
 
 ### Navigacija po danima

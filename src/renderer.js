@@ -568,6 +568,7 @@ feedingsList.addEventListener('click', async (e) => {
     submitBtn.innerHTML = '<i class="fas fa-check"></i> Sačuvaj izmene';
     cancelBtn.innerHTML = '<i class="fas fa-xmark"></i> Otkaži';
     cancelBtn.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 });
 

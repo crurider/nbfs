@@ -9,5 +9,9 @@ contextBridge.exposeInMainWorld('api', {
   getGoal: () => ipcRenderer.invoke('get-goal'),
   setGoal: (value) => ipcRenderer.invoke('set-goal', value),
   getAvgPortion: () => ipcRenderer.invoke('get-avg-portion'),
-  setAvgPortion: (value) => ipcRenderer.invoke('set-avg-portion', value)
+  setAvgPortion: (value) => ipcRenderer.invoke('set-avg-portion', value),
+  getDailyTotals: (startDate, endDate) => ipcRenderer.invoke('get-daily-totals', startDate, endDate),
+  getHourlyTotals: (date) => ipcRenderer.invoke('get-hourly-totals', date),
+  getDayNightSplit: (date) => ipcRenderer.invoke('get-day-night-split', date),
+  getFeedingIntervals: (date) => ipcRenderer.invoke('get-feeding-intervals', date)
 });

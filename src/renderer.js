@@ -36,6 +36,16 @@ const projNote = document.getElementById('proj-note');
 const btnRefreshProjection = document.getElementById('btn-refresh-projection');
 const themeSwitch = document.getElementById('theme-switch');
 
+const reportsToggle = document.getElementById('reports-toggle');
+const reportsView = document.getElementById('reports-view');
+const mainEl = document.querySelector('main.main');
+const btnReportsBack = document.getElementById('btn-reports-back');
+const reportsDateInput = document.getElementById('reports-date');
+const chartWeekly = document.getElementById('chart-weekly');
+const chartHourly = document.getElementById('chart-hourly');
+const chartDayNight = document.getElementById('chart-daynight');
+const chartIntervals = document.getElementById('chart-intervals');
+
 const MIN_INTERVAL_HOURS = 1.0;
 
 let currentAvgPortion = 60;
@@ -182,10 +192,12 @@ function setCurrentTime() {
 function setDate(dateStr) {
   dateInput.value = dateStr;
   navDateInput.value = dateStr;
+  if (reportsDateInput) reportsDateInput.value = dateStr;
   if (window.NBFSDatePickers) {
     const pickerDate = formatDateForPicker(dateStr);
     window.NBFSDatePickers.setValue('date', pickerDate);
     window.NBFSDatePickers.setValue('nav-date', pickerDate);
+    window.NBFSDatePickers.setValue('reports-date', pickerDate);
   }
 }
 
@@ -623,10 +635,301 @@ if (themeSwitch) {
   });
 }
 
+function formatShortDate(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString('sr-RS', { weekday: 'short', day: 'numeric' });
+}
+
+function renderEmpty(container, message = 'Nema podataka') {
+  container.innerHTML = `<p class="chart-empty">${escapeHtml(message)}</p>`;
+}
+
+function renderBarChart(container, data, options = {}) {
+  container.innerHTML = '';
+  if (!data || data.length === 0 || data.every(d => d.value === 0)) {
+    renderEmpty(container);
+    return;
+  }
+
+  const height = options.height || 220;
+  const maxValue = options.maxValue || Math.max(...data.map(d => d.value)) * 1.1 || 1;
+  const padding = { top: 16, right: 12, bottom: 48, left: 48 };
+  const width = container.clientWidth || 400;
+  const chartW = Math.max(100, width - padding.left - padding.right);
+  const chartH = height - padding.top - padding.bottom;
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', '100%');
+  svg.setAttribute('height', height);
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.style.overflow = 'visible';
+
+  const gridCount = 4;
+  for (let i = 0; i <= gridCount; i++) {
+    const y = padding.top + (chartH * i) / gridCount;
+    const value = Math.round(maxValue * (1 - i / gridCount));
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', padding.left);
+    line.setAttribute('y1', y);
+    line.setAttribute('x2', padding.left + chartW);
+    line.setAttribute('y2', y);
+    line.setAttribute('stroke', 'var(--border)');
+    line.setAttribute('stroke-width', '1');
+    if (i > 0 && i < gridCount) line.setAttribute('stroke-dasharray', '4 4');
+    svg.appendChild(line);
+
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', padding.left - 8);
+    label.setAttribute('y', y + 4);
+    label.setAttribute('text-anchor', 'end');
+    label.setAttribute('fill', 'var(--text-light)');
+    label.setAttribute('font-size', '11');
+    label.textContent = options.formatValue ? options.formatValue(value) : value;
+    svg.appendChild(label);
+  }
+
+  const slotW = chartW / data.length;
+  const barW = slotW * 0.55;
+
+  data.forEach((d, i) => {
+    const barH = (d.value / maxValue) * chartH;
+    const x = padding.left + i * slotW + (slotW - barW) / 2;
+    const y = padding.top + chartH - barH;
+
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', x);
+    rect.setAttribute('y', y);
+    rect.setAttribute('width', Math.max(1, barW));
+    rect.setAttribute('height', Math.max(0, barH));
+    rect.setAttribute('rx', 6);
+    rect.setAttribute('ry', 6);
+    rect.setAttribute('fill', d.color || options.barColor || 'var(--primary)');
+    rect.classList.add('chart-bar');
+    svg.appendChild(rect);
+
+    if (barH > 14) {
+      const valueLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      valueLabel.setAttribute('x', x + barW / 2);
+      valueLabel.setAttribute('y', y + 14);
+      valueLabel.setAttribute('text-anchor', 'middle');
+      valueLabel.setAttribute('fill', 'white');
+      valueLabel.setAttribute('font-size', '11');
+      valueLabel.setAttribute('font-weight', '700');
+      valueLabel.textContent = d.value;
+      svg.appendChild(valueLabel);
+    }
+
+    const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    xLabel.setAttribute('x', x + barW / 2);
+    xLabel.setAttribute('y', padding.top + chartH + 20);
+    xLabel.setAttribute('text-anchor', 'middle');
+    xLabel.setAttribute('fill', 'var(--text-light)');
+    xLabel.setAttribute('font-size', '11');
+    xLabel.setAttribute('font-weight', '600');
+    xLabel.textContent = d.label;
+    svg.appendChild(xLabel);
+  });
+
+  container.appendChild(svg);
+}
+
+function renderDonutChart(container, data, options = {}) {
+  container.innerHTML = '';
+  if (!data || data.length === 0 || data.every(d => d.value === 0)) {
+    renderEmpty(container);
+    return;
+  }
+
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+  const size = 180;
+  const radius = 70;
+  const center = size / 2;
+  const strokeWidth = options.strokeWidth || 28;
+  const circumference = 2 * Math.PI * radius;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'donut-wrapper';
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', size);
+  svg.setAttribute('height', size);
+  svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+  svg.style.transform = 'rotate(-90deg)';
+
+  let offset = 0;
+  data.forEach((d) => {
+    const segment = (d.value / total) * circumference;
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', center);
+    circle.setAttribute('cy', center);
+    circle.setAttribute('r', radius);
+    circle.setAttribute('fill', 'none');
+    circle.setAttribute('stroke', d.color || 'var(--primary)');
+    circle.setAttribute('stroke-width', strokeWidth);
+    circle.setAttribute('stroke-dasharray', `${segment} ${circumference}`);
+    circle.setAttribute('stroke-dashoffset', -offset);
+    circle.setAttribute('stroke-linecap', 'round');
+    circle.classList.add('chart-donut-segment');
+    svg.appendChild(circle);
+    offset += segment;
+  });
+
+  wrapper.appendChild(svg);
+
+  const centerLabel = document.createElement('div');
+  centerLabel.className = 'donut-center';
+  centerLabel.innerHTML = `<span>${total}</span><small>ml</small>`;
+  wrapper.appendChild(centerLabel);
+
+  const legend = document.createElement('div');
+  legend.className = 'donut-legend';
+  data.forEach((d) => {
+    const percent = Math.round((d.value / total) * 100);
+    const item = document.createElement('div');
+    item.className = 'donut-legend-item';
+    item.innerHTML = `<span class="donut-legend-color" style="background:${d.color || 'var(--primary)'}"></span><span>${escapeHtml(d.label)}</span><strong>${percent}%</strong>`;
+    legend.appendChild(item);
+  });
+  wrapper.appendChild(legend);
+
+  container.appendChild(wrapper);
+}
+
+function getLast7Days(dateStr) {
+  const dates = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(dateStr + 'T00:00:00');
+    d.setDate(d.getDate() - i);
+    dates.push(toISODate(d));
+  }
+  return dates;
+}
+
+function groupHourly(hourlyData) {
+  const groups = [];
+  for (let i = 0; i < 24; i += 2) {
+    const total = hourlyData
+      .filter(h => h.hour >= i && h.hour < i + 2)
+      .reduce((sum, h) => sum + h.total, 0);
+    groups.push({ label: `${String(i).padStart(2, '0')}h`, value: total });
+  }
+  return groups;
+}
+
+async function loadReports() {
+  if (!chartWeekly) return;
+  const date = dateInput.value;
+  if (!date) return;
+
+  const weekDates = getLast7Days(date);
+  const [startDate, endDate] = [weekDates[0], weekDates[weekDates.length - 1]];
+
+  const [goal, dailyTotals, hourlyTotals, split, intervals] = await Promise.all([
+    window.api.getGoal(),
+    window.api.getDailyTotals(startDate, endDate),
+    window.api.getHourlyTotals(date),
+    window.api.getDayNightSplit(date),
+    window.api.getFeedingIntervals(date)
+  ]);
+
+  const dateMap = new Map(dailyTotals.map(d => [d.date, d.total]));
+  const weekData = weekDates.map(d => {
+    const value = dateMap.get(d) || 0;
+    let color = 'var(--primary)';
+    if (value >= goal) {
+      color = 'var(--success)';
+    } else if (value < goal - 50) {
+      color = 'var(--danger)';
+    }
+    return { label: formatShortDate(d), value, color };
+  });
+
+  const weekMax = Math.max(goal, ...weekData.map(d => d.value)) * 1.1 || goal || 1;
+  renderBarChart(chartWeekly, weekData, {
+    maxValue: weekMax,
+    formatValue: v => `${v} ml`
+  });
+
+  const hourlyData = groupHourly(hourlyTotals);
+  const hourlyMax = Math.max(...hourlyData.map(d => d.value), 1) * 1.1;
+  renderBarChart(chartHourly, hourlyData, {
+    maxValue: hourlyMax,
+    barColor: 'var(--secondary-dark)',
+    formatValue: v => `${v} ml`
+  });
+
+  renderDonutChart(chartDayNight, [
+    { label: 'Dan (07–19h)', value: split.dayTotal, color: 'var(--success)' },
+    { label: 'Noć (19–07h)', value: split.nightTotal, color: 'var(--primary)' }
+  ].filter(d => d.value > 0));
+
+  const intervalData = intervals.map((value, index) => ({
+    label: `${index + 1}.`,
+    value
+  }));
+  const intervalMax = Math.max(...intervals, 60) * 1.1;
+  renderBarChart(chartIntervals, intervalData, {
+    maxValue: intervalMax,
+    barColor: 'var(--warning)',
+    formatValue: v => `${v} min`
+  });
+}
+
+function mountReportsDatePicker() {
+  if (!window.NBFSDatePickers || !reportsDateInput) return;
+  const pickerDate = formatDateForPicker(reportsDateInput.value || dateInput.value || toISODate(new Date()));
+  window.NBFSDatePickers.mountDatePicker('reports-date', 'reports-date-picker', pickerDate, (value) => {
+    const isoDate = parsePickerDate(value);
+    reportsDateInput.value = isoDate;
+    dateInput.value = isoDate;
+    navDateInput.value = isoDate;
+    if (window.NBFSDatePickers) {
+      window.NBFSDatePickers.setValue('date', formatDateForPicker(isoDate));
+      window.NBFSDatePickers.setValue('nav-date', formatDateForPicker(isoDate));
+    }
+    refresh();
+    loadReports();
+  });
+}
+
+function showReports() {
+  if (!reportsView || !mainEl) return;
+  mainEl.classList.add('hidden');
+  reportsView.classList.remove('hidden');
+  if (window.NBFSDatePickers && reportsDateInput) {
+    window.NBFSDatePickers.setValue('reports-date', formatDateForPicker(dateInput.value));
+  }
+  setTimeout(() => {
+    loadReports();
+  }, 0);
+}
+
+function hideReports() {
+  if (!reportsView || !mainEl) return;
+  reportsView.classList.add('hidden');
+  mainEl.classList.remove('hidden');
+}
+
+if (reportsToggle) {
+  reportsToggle.addEventListener('click', showReports);
+  reportsToggle.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      showReports();
+    }
+  });
+}
+
+if (btnReportsBack) {
+  btnReportsBack.addEventListener('click', hideReports);
+}
+
 (async () => {
   loadTheme();
   setToday();
   mountPickers();
+  mountReportsDatePicker();
   await loadGoal();
   await loadAvgPortion();
   await refresh();

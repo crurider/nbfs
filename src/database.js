@@ -126,6 +126,57 @@ function initDatabase(dbPath) {
     };
   }
 
+  function getDailyTotals(startDate, endDate) {
+    const rows = db.prepare(`
+      SELECT date(datetime) AS date, SUM(amount_ml) AS total
+      FROM feedings
+      WHERE date(datetime) BETWEEN ? AND ?
+      GROUP BY date(datetime)
+      ORDER BY date(datetime) ASC
+    `).all(startDate, endDate);
+    return rows.map(r => ({ date: r.date, total: r.total || 0 }));
+  }
+
+  function getHourlyTotals(date) {
+    const rows = db.prepare(`
+      SELECT CAST(strftime('%H', datetime) AS INTEGER) AS hour, SUM(amount_ml) AS total
+      FROM feedings
+      WHERE date(datetime) = ?
+      GROUP BY hour
+      ORDER BY hour ASC
+    `).all(date);
+    return rows.map(r => ({ hour: r.hour, total: r.total || 0 }));
+  }
+
+  function getDayNightSplit(date) {
+    const row = db.prepare(`
+      SELECT
+        SUM(CASE WHEN time(datetime) >= '07:00:00' AND time(datetime) < '19:00:00' THEN amount_ml ELSE 0 END) AS dayTotal,
+        SUM(CASE WHEN time(datetime) < '07:00:00' OR time(datetime) >= '19:00:00' THEN amount_ml ELSE 0 END) AS nightTotal
+      FROM feedings
+      WHERE date(datetime) = ?
+    `).get(date);
+    return {
+      dayTotal: row && row.dayTotal ? row.dayTotal : 0,
+      nightTotal: row && row.nightTotal ? row.nightTotal : 0
+    };
+  }
+
+  function getFeedingIntervals(date) {
+    const rows = db.prepare(`
+      SELECT datetime FROM feedings
+      WHERE date(datetime) = ?
+      ORDER BY datetime ASC
+    `).all(date);
+    const intervals = [];
+    for (let i = 1; i < rows.length; i++) {
+      const prev = new Date(rows[i - 1].datetime);
+      const curr = new Date(rows[i].datetime);
+      intervals.push(Math.round((curr - prev) / (1000 * 60)));
+    }
+    return intervals;
+  }
+
   return {
     getDailyGoal,
     setDailyGoal,
@@ -136,6 +187,10 @@ function initDatabase(dbPath) {
     updateFeeding,
     deleteFeeding,
     getStats,
+    getDailyTotals,
+    getHourlyTotals,
+    getDayNightSplit,
+    getFeedingIntervals,
     close: () => db.close()
   };
 }

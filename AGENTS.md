@@ -59,6 +59,15 @@ Na osnovu **dnevne mete**, **prosečne porcije** i poslednjeg obroka, aplikacija
 - Ako nije unet nijedan obrok za izabrani dan, **Predlog vremena obroka** prikazuje `—`, a **Preporučena količina** prikazuje samo prosečnu porciju
 - Ako je ponoć izabranog datuma već prošla u odnosu na trenutno vreme, projekcija prikazuje `0` preostalih obroka i odgovarajuću poruku
 
+### Grafički izveštaji
+Iz header-a se otvara poseban ekran sa grafičkim izveštajima (dugme pored dark-mode prekidača). Izveštaji se prikazuju kao **SVG grafikoni** u temi aplikacije i ažuriraju se za izabrani datum:
+- **Nedeljni pregled** — stubičasti grafikon ukupnog unosa po danima za poslednjih 7 dana; boje prate logiku mete (zeleno kada je meta dostignuta, crveno kada je razlika 50 ml ili više, plavo između)
+- **Dnevni obrazac hranjenja** — stubičasti grafikon po 2-časovnim intervalima
+- **Dan / noć** — donut grafikon udela mleka unetog danju (07–19h) i noću (19–07h)
+- **Intervali između obroka** — stubičasti grafikon intervala između uzastopnih obroka
+
+Ekran izveštaja ima svoj date picker, pa nije potrebno vraćati se na početnu stranu za promenu datuma.
+
 ### Ostale funkcije
 - **Dnevna meta** — podesiva, podrazumevano `400 ml`
 - **Prosečna porcija** — podesiva, podrazumevano `60 ml`, koristi se za projekciju

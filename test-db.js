@@ -84,6 +84,41 @@ eq(emptyStats.total, 0, 'Empty date total');
 eq(emptyStats.avgPerHour, 0, 'Empty date avg per hour');
 eq(emptyStats.avgPerMeal, 0, 'Empty date avg per meal');
 
+// Reports queries
+const datePrev = '2026-06-17';
+db.addFeeding(`${datePrev}T08:00:00`, 50, false, false, 0);
+db.addFeeding(`${datePrev}T20:00:00`, 40, false, false, 0);
+
+const dateNext = '2026-06-19';
+db.addFeeding(`${dateNext}T06:00:00`, 30, false, false, 0);
+db.addFeeding(`${dateNext}T14:00:00`, 70, false, false, 0);
+
+const dailyTotals = db.getDailyTotals('2026-06-17', '2026-06-19');
+eq(dailyTotals.length, 3, 'Daily totals should cover 3 days');
+eq(dailyTotals.find(d => d.date === date).total, 160, 'Daily total for main date');
+eq(dailyTotals.find(d => d.date === datePrev).total, 90, 'Daily total for previous date');
+eq(dailyTotals.find(d => d.date === dateNext).total, 100, 'Daily total for next date');
+
+const hourlyTotals = db.getHourlyTotals(date);
+eq(hourlyTotals.length, 2, 'Hourly totals should have 2 groups');
+eq(hourlyTotals.find(h => h.hour === 7).total, 90, 'Hourly total for 7am');
+eq(hourlyTotals.find(h => h.hour === 10).total, 70, 'Hourly total for 10am');
+
+const split = db.getDayNightSplit(date);
+eq(split.dayTotal, 160, 'Day total should be 160');
+eq(split.nightTotal, 0, 'Night total should be 0');
+
+const splitPrev = db.getDayNightSplit(datePrev);
+eq(splitPrev.dayTotal, 50, 'Day total for previous date');
+eq(splitPrev.nightTotal, 40, 'Night total for previous date');
+
+const intervals = db.getFeedingIntervals(date);
+eq(intervals.length, 1, 'Should have 1 interval');
+eq(intervals[0], 180, 'Interval should be 180 minutes');
+
+const emptyIntervals = db.getFeedingIntervals('2020-01-01');
+eq(emptyIntervals.length, 0, 'Empty date should have no intervals');
+
 // Cleanup
 db.close();
 fs.rmSync(tmpDir, { recursive: true, force: true });

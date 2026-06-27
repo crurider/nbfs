@@ -14,6 +14,10 @@ ipcMain.handle('get-goal', () => db.getDailyGoal());
 ipcMain.handle('set-goal', (event, value) => db.setDailyGoal(value));
 ipcMain.handle('get-avg-portion', () => db.getAvgPortion());
 ipcMain.handle('set-avg-portion', (event, value) => db.setAvgPortion(value));
+ipcMain.handle('get-daily-totals', (event, startDate, endDate) => db.getDailyTotals(startDate, endDate));
+ipcMain.handle('get-hourly-totals', (event, date) => db.getHourlyTotals(date));
+ipcMain.handle('get-day-night-split', (event, date) => db.getDayNightSplit(date));
+ipcMain.handle('get-feeding-intervals', (event, date) => db.getFeedingIntervals(date));
 
 function createWindow() {
   const win = new BrowserWindow({

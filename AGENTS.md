@@ -105,6 +105,18 @@ dist/NBFS 1.0.0.exe
 
 Ovo je **portable** izvršna datoteka — nema potrebe za instalacijom.
 
+## Automatski GitHub release
+
+Ako pushuješ tag oblika `v*` (npr. `v1.0.0`), GitHub Actions će automatski:
+
+1. Pokrenuti Windows runner
+2. Instalirati zavisnosti
+3. Rebuildovati `better-sqlite3` za Electron
+4. Napraviti portable `.exe`
+5. Kreirati GitHub release i zakaciti izvršnu datoteku
+
+Konfiguracija se nalazi u `.github/workflows/release.yml`.
+
 ## Testiranje baze
 
 ```bash

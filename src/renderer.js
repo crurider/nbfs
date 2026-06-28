@@ -836,10 +836,12 @@ async function loadReports() {
   const dateMap = new Map(dailyTotals.map(d => [d.date, d.total]));
   const weekData = weekDates.map(d => {
     const value = dateMap.get(d) || 0;
-    let color = 'var(--primary)';
+    let color;
     if (value >= goal) {
       color = 'var(--success)';
-    } else if (value < goal - 50) {
+    } else if (value >= goal - 50) {
+      color = 'var(--primary)';
+    } else {
       color = 'var(--danger)';
     }
     return { label: formatShortDate(d), value, color };
@@ -851,11 +853,13 @@ async function loadReports() {
     formatValue: v => `${v} ml`
   });
 
-  const hourlyData = groupHourly(hourlyTotals);
+  const hourlyData = groupHourly(hourlyTotals).map(d => ({
+    ...d,
+    color: d.value > 0 && d.value < currentAvgPortion ? 'var(--danger)' : 'var(--secondary-dark)'
+  }));
   const hourlyMax = Math.max(...hourlyData.map(d => d.value), 1) * 1.1;
   renderBarChart(chartHourly, hourlyData, {
     maxValue: hourlyMax,
-    barColor: 'var(--secondary-dark)',
     formatValue: v => `${v} ml`
   });
 

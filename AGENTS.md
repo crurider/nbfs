@@ -62,7 +62,7 @@ Na osnovu **dnevne mete**, **prosečne porcije** i poslednjeg obroka, aplikacija
 ### Grafički izveštaji
 Iz header-a se otvara poseban ekran sa grafičkim izveštajima (dugme pored dark-mode prekidača). Izveštaji se prikazuju kao **SVG grafikoni** u temi aplikacije i ažuriraju se za izabrani datum:
 - **Nedeljni pregled** — stubičasti grafikon ukupnog unosa po danima za poslednjih 7 dana; boje prate logiku mete (zeleno kada je meta dostignuta, crveno kada je razlika 50 ml ili više, plavo između)
-- **Dnevni obrazac hranjenja** — stubičasti grafikon po 2-časovnim intervalima
+- **Dnevni obrazac hranjenja** — stubičasti grafikon po 2-časovnim intervalima; stubovi ispod unete prosečne porcije su crveni, ostali ostaju u podrazumevanoj boji
 - **Dan / noć** — donut grafikon udela mleka unetog danju (07–19h) i noću (19–07h)
 - **Intervali između obroka** — stubičasti grafikon intervala između uzastopnih obroka
 

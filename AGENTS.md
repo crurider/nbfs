@@ -72,9 +72,9 @@ Ekran izveštaja ima svoj date picker, pa nije potrebno vraćati se na početnu 
 - **Dnevna meta** — podesiva, podrazumevano `400 ml`
 - **Prosečna porcija** — podesiva, podrazumevano `60 ml`, koristi se za projekciju
 - **Indikatori u listi obroka**:
-  - 🔴 crvena strelica — manje od `40 ml`
-  - 🟢 zelena strelica — više od `40 ml`
-  - bez oznake — tačno `40 ml`
+  - 🔴 crvena strelica — manje od prosečne porcije
+  - 🟢 zelena strelica — više od prosečne porcije
+  - bez oznake — tačno prosečna porcija
 - **Custom confirm modal** — umesto ugrađenih browser dijaloga
 - **Dark tema** — prebacivanje između svetle i tamne teme preko switch-a u headeru
 - **Aplikacija se pokreće maximizovana**

@@ -238,11 +238,12 @@ function changeDate(days) {
 }
 
 function getIndicator(amount) {
-  if (amount < 40) {
-    return `<div class="feeding-indicator low" title="Manje od 40 ml">${ARROW_DOWN_SVG}</div>`;
+  const avg = currentAvgPortion || 60;
+  if (amount < avg) {
+    return `<div class="feeding-indicator low" title="Manje od ${avg} ml">${ARROW_DOWN_SVG}</div>`;
   }
-  if (amount > 40) {
-    return `<div class="feeding-indicator high" title="Više od 40 ml">${ARROW_UP_SVG}</div>`;
+  if (amount > avg) {
+    return `<div class="feeding-indicator high" title="Više od ${avg} ml">${ARROW_UP_SVG}</div>`;
   }
   return '';
 }

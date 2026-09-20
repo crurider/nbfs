@@ -33,6 +33,11 @@ Jednostavna desktop aplikacija za praćenje unosa mleka kod novorođenčadi. Raz
   - **Dnevni obrazac hranjenja** — raspored unosa po satima
   - **Dan / noć** — udeo mleka unetog danju i noću
   - **Intervali između obroka** — razmaci između uzastopnih obroka
+- **Kalendar termina** — poseban ekran iz header-a (ikonica kalendara) za doktorske kontrole, preglede i vakcinacije:
+  - mesečna mreža, ponedeljak je prvi dan, nazivi na srpskom
+  - popunjen budući dan ima pastelnu pozadinu i listu termina sa izmenom, brisanjem i dugmetom za dodavanje; popunjen prošli dan je siv i otvara se samo na čitanje
+  - više termina po danu je dozvoljeno, vreme je obavezno u 24-časovnom `HH:mm` formatu
+  - podsetnik na početnom ekranu prikazuje sve termine u narednih 7 dana
 
 ## Tehnologije
 
@@ -59,7 +64,7 @@ npm run dist
 Izvršna datoteka se nalazi u `dist/` folderu:
 
 ```
-dist/NBFS 1.0.0.exe
+dist/NBFS 1.1.0.exe
 ```
 
 ## Struktura projekta

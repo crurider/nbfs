@@ -68,6 +68,21 @@ Iz header-a se otvara poseban ekran sa grafičkim izveštajima (dugme pored dark
 
 Ekran izveštaja ima svoj date picker, pa nije potrebno vraćati se na početnu stranu za promenu datuma.
 
+### Kalendar termina
+Iz header-a se otvara poseban ekran sa kalendarom (dugme sa ikonicom kalendara pored dugmeta za izveštaje). Služi za beleženje doktorskih kontrola, pregleda i vakcinacija, umesto vođenja na papiru:
+- **Mesečna mreža** — ponedeljak je prvi dan u nedelji, nazivi dana i meseci su na srpskom (`sr-Latn`)
+- **Stanja dana**:
+  - prazan budući dan — normalan, klik otvara modal za novi termin
+  - popunjen budući dan — pastelna pozadina, klik selektuje dan i ispod mreže prikazuje listu termina sa izmenom i brisanjem, plus dugme **Dodaj termin** za dodatne termine istog dana
+  - prazan prošli dan — onemogućen, ne otvara se
+  - popunjen prošli dan — siva pozadina, otvara se samo na čitanje (read-only, bez izmene i brisanja)
+- **Mešovit dan** (jedan termin prošao, drugi tek dolazi) ostaje pastelne boje dok ima bar jedan budući termin; prošli red u listi je siv i read-only
+- **Prošlo** se računa po punom datumu i vremenu (`new Date(datetime) < new Date()`)
+- **Modal za termin** — datum je fiksan na izabrani dan (`DD.MM.YYYY`), vreme je obavezno u 24-časovnom formatu `HH:mm` (React time picker, bez AM/PM), plus naslov i opis; režimi su novi termin, izmena i pregled; brisanje ide kroz postojeći custom confirm modal
+- **Više termina po danu** je dozvoljeno
+- **Podsetnik na početnom ekranu** — kartica prikazuje sve termine od sada do 7 dana unapred (fiksno), sortirano po vremenu; sakrivena je kad nema zakazanih termina; klik na stavku vodi na kalendar za taj dan
+- Termini se čuvaju u novoj `appointments` tabeli (`id`, `datetime`, `title`, `description`); postojeći podaci o obrocima se ne diraju
+
 ### Ostale funkcije
 - **Dnevna meta** — podesiva, podrazumevano `400 ml`
 - **Prosečna porcija** — podesiva, podrazumevano `60 ml`, koristi se za projekciju
@@ -100,7 +115,7 @@ npm run dist
 Rezultat se nalazi u `dist/` folderu:
 
 ```
-dist/NBFS 1.0.0.exe
+dist/NBFS 1.1.0.exe
 ```
 
 Ovo je **portable** izvršna datoteka — nema potrebe za instalacijom.

@@ -20,6 +20,13 @@ function initDatabase(dbPath) {
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS appointments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      datetime TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT DEFAULT ''
+    );
+    CREATE INDEX IF NOT EXISTS idx_appointments_datetime ON appointments(datetime);
   `);
 
   migrateFeedingsTable(db);
@@ -177,6 +184,53 @@ function initDatabase(dbPath) {
     return intervals;
   }
 
+  function validateAppointment(datetime, title) {
+    if (typeof datetime !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00$/.test(datetime) || Number.isNaN(new Date(datetime).getTime())) {
+      throw new Error('Invalid appointment datetime, expected YYYY-MM-DDTHH:mm:00');
+    }
+    if (typeof title !== 'string' || title.trim().length === 0) {
+      throw new Error('Appointment title is required');
+    }
+  }
+
+  function getAppointmentsInRange(startDate, endDate) {
+    return db.prepare(`
+      SELECT id, datetime, title, COALESCE(description, '') AS description FROM appointments
+      WHERE date(datetime) BETWEEN ? AND ?
+      ORDER BY datetime ASC
+    `).all(startDate, endDate);
+  }
+
+  function getAppointmentsForDay(date) {
+    return db.prepare(`
+      SELECT id, datetime, title, COALESCE(description, '') AS description FROM appointments
+      WHERE date(datetime) = ?
+      ORDER BY datetime ASC
+    `).all(date);
+  }
+
+  function addAppointment(datetime, title, description) {
+    validateAppointment(datetime, title);
+    const result = db.prepare(`
+      INSERT INTO appointments (datetime, title, description)
+      VALUES (?, ?, ?)
+    `).run(datetime, title.trim(), description == null ? '' : String(description));
+    return result.lastInsertRowid;
+  }
+
+  function updateAppointment(id, datetime, title, description) {
+    validateAppointment(datetime, title);
+    db.prepare(`
+      UPDATE appointments
+      SET datetime = ?, title = ?, description = ?
+      WHERE id = ?
+    `).run(datetime, title.trim(), description == null ? '' : String(description), id);
+  }
+
+  function deleteAppointment(id) {
+    db.prepare(`DELETE FROM appointments WHERE id = ?`).run(id);
+  }
+
   return {
     getDailyGoal,
     setDailyGoal,
@@ -191,6 +245,11 @@ function initDatabase(dbPath) {
     getHourlyTotals,
     getDayNightSplit,
     getFeedingIntervals,
+    getAppointmentsInRange,
+    getAppointmentsForDay,
+    addAppointment,
+    updateAppointment,
+    deleteAppointment,
     close: () => db.close()
   };
 }

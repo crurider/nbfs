@@ -46,6 +46,9 @@
         <div class="reports-toggle" id="reports-toggle" role="button" tabindex="0" aria-label="Prikaži izveštaje">
           <i class="fas fa-chart-pie"></i>
         </div>
+        <div class="calendar-toggle" id="calendar-toggle" role="button" tabindex="0" aria-label="Prikaži kalendar">
+          <i class="fas fa-calendar-days"></i>
+        </div>
         <div class="theme-switch" id="theme-switch" role="button" tabindex="0" aria-label="Prebaci između svetle i tamne teme">
           <i class="fas fa-sun"></i>
           <div class="theme-switch-track">
@@ -166,6 +169,14 @@
         <p class="projection-note" id="proj-note">Unesi prosečnu porciju da bi videli preporuku.</p>
       </section>
 
+      <section class="card reminder-card hidden" id="reminder-card">
+        <div class="list-header">
+          <h2><i class="fas fa-bell"></i> Predstojeći termini</h2>
+          <span class="badge">narednih 7 dana</span>
+        </div>
+        <div id="reminder-list" class="reminder-list"></div>
+      </section>
+
       <section class="card list-card">
         <div class="list-header">
           <h2>Obroci za <span id="list-date-label"></span></h2>
@@ -205,6 +216,33 @@
         </div>
       </div>
     </section>
+
+    <section id="calendar-view" class="hidden">
+      <div class="calendar-header">
+        <button type="button" id="btn-calendar-back" class="btn btn-nav"><i class="fas fa-arrow-left"></i> Nazad</button>
+        <h2><i class="fas fa-calendar-days"></i> Kalendar</h2>
+        <div class="calendar-nav">
+          <button type="button" id="btn-cal-prev" class="btn btn-nav" title="Prethodni mesec"><i class="fas fa-chevron-left"></i></button>
+          <button type="button" id="btn-cal-today" class="btn btn-nav">Danas</button>
+          <button type="button" id="btn-cal-next" class="btn btn-nav" title="Sledeći mesec"><i class="fas fa-chevron-right"></i></button>
+        </div>
+      </div>
+      <div class="card calendar-card">
+        <div class="calendar-month-label" id="calendar-month-label"></div>
+        <div class="calendar-weekdays" id="calendar-weekdays"></div>
+        <div class="calendar-grid" id="calendar-grid"></div>
+      </div>
+      <div class="card day-list-card hidden" id="calendar-day-card">
+        <div class="list-header">
+          <h2>Termini za <span id="calendar-day-label"></span></h2>
+          <div class="day-list-actions">
+            <span class="badge" id="calendar-day-count"></span>
+            <button type="button" id="btn-add-appt" class="btn btn-primary btn-sm hidden"><i class="fas fa-plus"></i> Dodaj termin</button>
+          </div>
+        </div>
+        <div id="calendar-day-list" class="feedings-list"></div>
+      </div>
+    </section>
   </div>
 
   <div id="confirm-modal" class="modal hidden">
@@ -216,6 +254,34 @@
       <div class="modal-actions">
         <button type="button" id="confirm-cancel" class="btn btn-secondary"><i class="fas fa-xmark"></i> Otkaži</button>
         <button type="button" id="confirm-ok" class="btn btn-danger"><i class="fas fa-trash-can"></i> Obriši</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="appointment-modal" class="modal hidden">
+    <div class="modal-backdrop" id="appointment-backdrop"></div>
+    <div class="modal-content modal-form">
+      <h3 id="appointment-title">Novi termin</h3>
+      <p class="appt-date-label" id="appointment-date-label"></p>
+      <div class="appt-form">
+        <div class="field">
+          <label for="appt-time">Vreme *</label>
+          <div id="appt-time-picker" class="picker-root"></div>
+          <input type="hidden" id="appt-time" required>
+        </div>
+        <div class="field">
+          <label for="appt-subject">Naslov *</label>
+          <input type="text" id="appt-subject" placeholder="npr. Pregled kod pedijatra" maxlength="200">
+        </div>
+        <div class="field">
+          <label for="appt-desc">Opis</label>
+          <textarea id="appt-desc" rows="3" placeholder="Dodatne napomene (opciono)"></textarea>
+        </div>
+        <p class="appt-error hidden" id="appointment-error"></p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="appointment-cancel" class="btn btn-secondary"><i class="fas fa-xmark"></i> Zatvori</button>
+        <button type="button" id="appointment-save" class="btn btn-primary"><i class="fas fa-check"></i> Sačuvaj</button>
       </div>
     </div>
   </div>

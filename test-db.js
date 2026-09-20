@@ -119,6 +119,36 @@ eq(intervals[0], 180, 'Interval should be 180 minutes');
 const emptyIntervals = db.getFeedingIntervals('2020-01-01');
 eq(emptyIntervals.length, 0, 'Empty date should have no intervals');
 
+// Appointments
+const apptDate = '2026-06-20';
+const apptId1 = db.addAppointment(`${apptDate}T09:00:00`, 'Pediatrician', 'Checkup');
+const apptId2 = db.addAppointment(`${apptDate}T15:30:00`, 'Vaccination', '');
+
+assert(apptId1 > 0 && apptId2 > 0, 'Appointment IDs should be positive');
+
+let dayAppointments = db.getAppointmentsForDay(apptDate);
+eq(dayAppointments.length, 2, 'Should have 2 appointments for the day');
+eq(dayAppointments[0].datetime, `${apptDate}T09:00:00`, 'First appointment datetime');
+eq(dayAppointments[0].title, 'Pediatrician', 'First appointment title');
+eq(dayAppointments[0].description, 'Checkup', 'First appointment description');
+eq(dayAppointments[1].datetime, `${apptDate}T15:30:00`, 'Second appointment datetime');
+eq(dayAppointments[1].title, 'Vaccination', 'Second appointment title');
+
+const rangeAppointments = db.getAppointmentsInRange('2026-06-19', '2026-06-21');
+eq(rangeAppointments.length, 2, 'Range query should return 2 appointments');
+eq(rangeAppointments[0].datetime, `${apptDate}T09:00:00`, 'Range sorted by datetime ASC');
+
+db.updateAppointment(apptId2, `${apptDate}T16:00:00`, 'Vaccination updated', 'Note');
+dayAppointments = db.getAppointmentsForDay(apptDate);
+eq(dayAppointments[1].datetime, `${apptDate}T16:00:00`, 'Updated appointment datetime');
+eq(dayAppointments[1].title, 'Vaccination updated', 'Updated appointment title');
+eq(dayAppointments[1].description, 'Note', 'Updated appointment description');
+
+db.deleteAppointment(apptId1);
+dayAppointments = db.getAppointmentsForDay(apptDate);
+eq(dayAppointments.length, 1, 'Should have 1 appointment after delete');
+eq(dayAppointments[0].title, 'Vaccination updated', 'Remaining appointment title');
+
 // Cleanup
 db.close();
 fs.rmSync(tmpDir, { recursive: true, force: true });

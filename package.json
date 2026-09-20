@@ -1,6 +1,6 @@
 {
   "name": "nbfs",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Newborn Baby Feeding Schedule - Electron desktop app",
   "main": "src/main.js",
   "scripts": {

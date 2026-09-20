@@ -13,5 +13,10 @@ contextBridge.exposeInMainWorld('api', {
   getDailyTotals: (startDate, endDate) => ipcRenderer.invoke('get-daily-totals', startDate, endDate),
   getHourlyTotals: (date) => ipcRenderer.invoke('get-hourly-totals', date),
   getDayNightSplit: (date) => ipcRenderer.invoke('get-day-night-split', date),
-  getFeedingIntervals: (date) => ipcRenderer.invoke('get-feeding-intervals', date)
+  getFeedingIntervals: (date) => ipcRenderer.invoke('get-feeding-intervals', date),
+  getAppointmentsInRange: (startDate, endDate) => ipcRenderer.invoke('get-appointments-range', startDate, endDate),
+  getAppointmentsForDay: (date) => ipcRenderer.invoke('get-appointments-day', date),
+  addAppointment: (datetime, title, description) => ipcRenderer.invoke('add-appointment', datetime, title, description),
+  updateAppointment: (id, datetime, title, description) => ipcRenderer.invoke('update-appointment', id, datetime, title, description),
+  deleteAppointment: (id) => ipcRenderer.invoke('delete-appointment', id)
 });

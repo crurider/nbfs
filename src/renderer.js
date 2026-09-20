@@ -228,6 +228,8 @@ function mountPickers() {
     navDateInput.value = isoDate;
     refresh();
   });
+
+  mountApptTimePicker();
 }
 
 function changeDate(days) {
@@ -474,6 +476,7 @@ async function refresh() {
   renderStats(stats);
   renderFeedings(feedings);
   renderProjection(feedings, stats);
+  await loadReminder();
 }
 
 async function loadGoal() {
@@ -898,22 +901,38 @@ function mountReportsDatePicker() {
   });
 }
 
-function showReports() {
-  if (!reportsView || !mainEl) return;
-  mainEl.classList.add('hidden');
-  reportsView.classList.remove('hidden');
-  if (window.NBFSDatePickers && reportsDateInput) {
-    window.NBFSDatePickers.setValue('reports-date', formatDateForPicker(dateInput.value));
+function showView(name) {
+  if (!mainEl || !reportsView || !calendarView) return;
+  mainEl.classList.toggle('hidden', name !== 'main');
+  reportsView.classList.toggle('hidden', name !== 'reports');
+  calendarView.classList.toggle('hidden', name !== 'calendar');
+  if (name === 'reports') {
+    if (window.NBFSDatePickers && reportsDateInput) {
+      window.NBFSDatePickers.setValue('reports-date', formatDateForPicker(dateInput.value));
+    }
+    setTimeout(() => {
+      loadReports();
+    }, 0);
   }
-  setTimeout(() => {
-    loadReports();
-  }, 0);
+  if (name === 'calendar') {
+    loadCalendar();
+  }
+}
+
+function showReports() {
+  showView('reports');
 }
 
 function hideReports() {
-  if (!reportsView || !mainEl) return;
-  reportsView.classList.add('hidden');
-  mainEl.classList.remove('hidden');
+  showView('main');
+}
+
+function showCalendar() {
+  showView('calendar');
+}
+
+function hideCalendar() {
+  showView('main');
 }
 
 if (reportsToggle) {
@@ -928,6 +947,529 @@ if (reportsToggle) {
 
 if (btnReportsBack) {
   btnReportsBack.addEventListener('click', hideReports);
+}
+
+// ===== Kalendar / termini =====
+
+const calendarToggle = document.getElementById('calendar-toggle');
+const calendarView = document.getElementById('calendar-view');
+const btnCalendarBack = document.getElementById('btn-calendar-back');
+const btnCalPrev = document.getElementById('btn-cal-prev');
+const btnCalToday = document.getElementById('btn-cal-today');
+const btnCalNext = document.getElementById('btn-cal-next');
+const calendarMonthLabel = document.getElementById('calendar-month-label');
+const calendarWeekdays = document.getElementById('calendar-weekdays');
+const calendarGrid = document.getElementById('calendar-grid');
+const calendarDayCard = document.getElementById('calendar-day-card');
+const calendarDayLabel = document.getElementById('calendar-day-label');
+const calendarDayCount = document.getElementById('calendar-day-count');
+const calendarDayList = document.getElementById('calendar-day-list');
+const btnAddAppt = document.getElementById('btn-add-appt');
+
+const apptModal = document.getElementById('appointment-modal');
+const apptModalTitle = document.getElementById('appointment-title');
+const apptDateLabel = document.getElementById('appointment-date-label');
+const apptTimeInput = document.getElementById('appt-time');
+const apptSubjectInput = document.getElementById('appt-subject');
+const apptDescInput = document.getElementById('appt-desc');
+const apptError = document.getElementById('appointment-error');
+const apptSaveBtn = document.getElementById('appointment-save');
+const apptCancelBtn = document.getElementById('appointment-cancel');
+
+const reminderCard = document.getElementById('reminder-card');
+const reminderList = document.getElementById('reminder-list');
+
+let calYear = null;
+let calMonth = null;
+let calSelected = null;
+let calData = new Map();
+
+let apptModalMode = 'create';
+let apptModalDate = '';
+let apptModalId = null;
+
+const APPT_TIME_RE = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
+
+function setApptTime(value) {
+  apptTimeInput.value = value || '';
+  if (window.NBFSDatePickers) {
+    window.NBFSDatePickers.setValue('appt-time', value || '');
+  }
+}
+
+function setApptTimeDisabled(disabled) {
+  if (window.NBFSDatePickers && typeof window.NBFSDatePickers.setDisabled === 'function') {
+    window.NBFSDatePickers.setDisabled('appt-time', disabled);
+  }
+  const visible = document.querySelector('#appt-time-picker input');
+  if (visible) visible.disabled = !!disabled;
+}
+
+function mountApptTimePicker() {
+  if (!window.NBFSDatePickers) return;
+  window.NBFSDatePickers.mountTimePicker('appt-time', 'appt-time-picker', apptTimeInput.value || '', (value) => {
+    apptTimeInput.value = value;
+    if (value && apptError) apptError.classList.add('hidden');
+  }, { placeholder: 'HH:mm' });
+  setApptTimeDisabled(apptModalMode === 'view');
+}
+
+function isApptPast(datetime) {
+  return new Date(datetime) < new Date();
+}
+
+function isDayPastEmpty(dateStr) {
+  return new Date(dateStr + 'T23:59:59') < new Date();
+}
+
+function getSrWeekdayNames() {
+  if (window.NBFSDatePickers && typeof window.NBFSDatePickers.getSrWeekdays === 'function') {
+    try {
+      return window.NBFSDatePickers.getSrWeekdays();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  return ['pon', 'uto', 'sre', 'čet', 'pet', 'sub', 'ned'];
+}
+
+function getSrMonthName(year, monthIndex) {
+  if (window.NBFSDatePickers && typeof window.NBFSDatePickers.getSrMonthLabel === 'function') {
+    try {
+      return window.NBFSDatePickers.getSrMonthLabel(year, monthIndex);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  return new Date(year, monthIndex, 1).toLocaleDateString('sr-RS', { month: 'long', year: 'numeric' });
+}
+
+function ensureCalendarMonth() {
+  if (calYear === null || calMonth === null) {
+    const now = new Date();
+    calYear = now.getFullYear();
+    calMonth = now.getMonth();
+  }
+}
+
+function openCalendarForDate(isoDate) {
+  const [y, m] = isoDate.split('-').map(Number);
+  calYear = y;
+  calMonth = m - 1;
+  calSelected = isoDate;
+  showView('calendar');
+}
+
+async function loadCalendar() {
+  ensureCalendarMonth();
+  if (!calendarGrid) return;
+  const first = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-01`;
+  const lastDay = new Date(calYear, calMonth + 1, 0).getDate();
+  const last = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  let rows = [];
+  try {
+    rows = await window.api.getAppointmentsInRange(first, last);
+  } catch (err) {
+    console.error(err);
+    await showAlert({
+      title: 'Greška',
+      message: 'Došlo je do greške pri učitavanju termina.',
+      icon: 'triangle-exclamation'
+    });
+    return;
+  }
+  calData = new Map();
+  for (const r of rows) {
+    const key = r.datetime.slice(0, 10);
+    if (!calData.has(key)) calData.set(key, []);
+    calData.get(key).push(r);
+  }
+  renderCalendarGrid();
+  renderCalendarDayList();
+}
+
+function renderCalendarGrid() {
+  calendarMonthLabel.textContent = getSrMonthName(calYear, calMonth);
+
+  const weekdays = getSrWeekdayNames();
+  calendarWeekdays.innerHTML = '';
+  for (const name of weekdays) {
+    const cell = document.createElement('div');
+    cell.className = 'calendar-weekday';
+    cell.textContent = name;
+    calendarWeekdays.appendChild(cell);
+  }
+
+  calendarGrid.innerHTML = '';
+  const todayStr = toISODate(new Date());
+  const firstWeekday = new Date(calYear, calMonth, 1).getDay();
+  const leadBlanks = (firstWeekday + 6) % 7; // ponedeljak prvi
+  for (let i = 0; i < leadBlanks; i++) {
+    const blank = document.createElement('div');
+    blank.className = 'cal-day cal-blank';
+    calendarGrid.appendChild(blank);
+  }
+
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const iso = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const list = calData.get(iso) || [];
+    const hasFuture = list.some(a => !isApptPast(a.datetime));
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.dataset.date = iso;
+    btn.classList.add('cal-day');
+    if (iso === todayStr) btn.classList.add('is-today');
+    if (iso === calSelected) btn.classList.add('is-selected');
+
+    if (list.length === 0) {
+      if (isDayPastEmpty(iso)) {
+        btn.classList.add('past-empty');
+        btn.disabled = true;
+        btn.title = 'Nema termina';
+      } else {
+        btn.classList.add('empty');
+        btn.title = 'Dodaj termin';
+      }
+    } else if (hasFuture) {
+      btn.classList.add('has-future');
+      btn.title = `${list.length} ${list.length === 1 ? 'termin' : 'termina'} — klik za pregled`;
+    } else {
+      btn.classList.add('past-filled');
+      btn.title = `${list.length} ${list.length === 1 ? 'termin' : 'termina'} (završeno) — klik za pregled`;
+    }
+
+    btn.innerHTML = `
+      <span class="cal-day-number">${d}</span>
+      ${list.length > 0 ? `<span class="cal-day-count">${list.length}</span>` : ''}
+      ${list.length > 0 ? `<span class="cal-day-dots">${list.slice(0, 3).map(() => '<span class="cal-dot"></span>').join('')}</span>` : ''}
+    `;
+    calendarGrid.appendChild(btn);
+  }
+}
+
+function renderCalendarDayList() {
+  if (!calSelected) {
+    calendarDayCard.classList.add('hidden');
+    if (btnAddAppt) btnAddAppt.classList.add('hidden');
+    return;
+  }
+  const list = calData.get(calSelected) || [];
+  calendarDayCard.classList.remove('hidden');
+  calendarDayLabel.textContent = formatDateLabel(calSelected);
+  calendarDayCount.textContent = `${list.length} ${list.length === 1 ? 'termin' : 'termina'}`;
+  if (btnAddAppt) btnAddAppt.classList.toggle('hidden', isDayPastEmpty(calSelected));
+
+  if (list.length === 0) {
+    calendarDayList.innerHTML = '<p class="empty-state">Nema termina za izabrani dan.</p>';
+    return;
+  }
+
+  calendarDayList.innerHTML = '';
+  for (const a of list) {
+    const past = isApptPast(a.datetime);
+    const item = document.createElement('div');
+    item.className = 'feeding-item appt-item' + (past ? ' is-past' : '');
+    item.innerHTML = `
+      <div class="feeding-info">
+        <div class="feeding-main">
+          <div class="feeding-time">${escapeHtml(a.datetime.slice(11, 16))}</div>
+          <div class="feeding-amount appt-title">${escapeHtml(a.title)}</div>
+        </div>
+        ${a.description ? `<div class="appt-desc">${escapeHtml(a.description)}</div>` : ''}
+      </div>
+      <div class="feeding-actions">
+        ${past
+          ? `<button class="btn-icon view" data-id="${a.id}" title="Pregled"><i class="fas fa-eye"></i></button>`
+          : `<button class="btn-icon edit" data-id="${a.id}" title="Izmeni"><i class="fas fa-pen"></i></button>
+             <button class="btn-icon delete" data-id="${a.id}" title="Obriši"><i class="fas fa-trash-can"></i></button>`}
+      </div>
+    `;
+    calendarDayList.appendChild(item);
+  }
+}
+
+function openAppointmentModal(mode, { date, appt }) {
+  apptModalMode = mode;
+  apptError.classList.add('hidden');
+  apptError.textContent = '';
+
+  if (mode === 'create') {
+    apptModalDate = date;
+    apptModalId = null;
+    apptModalTitle.textContent = 'Novi termin';
+    setApptTime('');
+    apptSubjectInput.value = '';
+    apptDescInput.value = '';
+    setApptTimeDisabled(false);
+    apptSubjectInput.disabled = false;
+    apptDescInput.disabled = false;
+    apptSaveBtn.classList.remove('hidden');
+  } else if (mode === 'edit') {
+    apptModalDate = appt.datetime.slice(0, 10);
+    apptModalId = appt.id;
+    apptModalTitle.textContent = 'Izmena termina';
+    setApptTime(appt.datetime.slice(11, 16));
+    apptSubjectInput.value = appt.title;
+    apptDescInput.value = appt.description || '';
+    setApptTimeDisabled(false);
+    apptSubjectInput.disabled = false;
+    apptDescInput.disabled = false;
+    apptSaveBtn.classList.remove('hidden');
+  } else {
+    apptModalDate = appt.datetime.slice(0, 10);
+    apptModalId = appt.id;
+    apptModalTitle.textContent = 'Pregled termina';
+    setApptTime(appt.datetime.slice(11, 16));
+    apptSubjectInput.value = appt.title;
+    apptDescInput.value = appt.description || '';
+    setApptTimeDisabled(true);
+    apptSubjectInput.disabled = true;
+    apptDescInput.disabled = true;
+    apptSaveBtn.classList.add('hidden');
+  }
+
+  apptDateLabel.textContent = formatDateForPicker(apptModalDate);
+  apptModal.classList.remove('hidden');
+}
+
+function closeAppointmentModal() {
+  apptModal.classList.add('hidden');
+  apptModalMode = 'create';
+  apptModalId = null;
+}
+
+async function saveAppointment() {
+  if (apptModalMode === 'view') {
+    closeAppointmentModal();
+    return;
+  }
+  const time = (apptTimeInput.value || '').trim();
+  const title = apptSubjectInput.value.trim();
+  const description = apptDescInput.value;
+
+  if (!time) {
+    apptError.textContent = 'Vreme je obavezno.';
+    apptError.classList.remove('hidden');
+    return;
+  }
+  if (!APPT_TIME_RE.test(time)) {
+    apptError.textContent = 'Unesi vreme u formatu HH:mm (npr. 14:30).';
+    apptError.classList.remove('hidden');
+    return;
+  }
+  if (!title) {
+    apptError.textContent = 'Naslov je obavezan.';
+    apptError.classList.remove('hidden');
+    return;
+  }
+
+  const datetime = `${apptModalDate}T${to24HourTime(time)}:00`;
+  try {
+    if (apptModalMode === 'edit' && apptModalId !== null) {
+      await window.api.updateAppointment(apptModalId, datetime, title, description);
+    } else {
+      await window.api.addAppointment(datetime, title, description);
+    }
+  } catch (err) {
+    console.error(err);
+    apptError.textContent = err.message || 'Došlo je do greške pri čuvanju termina.';
+    apptError.classList.remove('hidden');
+    return;
+  }
+
+  const savedDate = apptModalDate;
+  closeAppointmentModal();
+  calSelected = savedDate;
+  await loadCalendar();
+  await loadReminder();
+}
+
+function findAppointmentById(id) {
+  for (const list of calData.values()) {
+    const found = list.find(a => a.id === id);
+    if (found) return found;
+  }
+  return null;
+}
+
+async function loadReminder() {
+  if (!reminderCard || !reminderList) return;
+  const now = new Date();
+  const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  let rows = [];
+  try {
+    rows = await window.api.getAppointmentsInRange(toISODate(now), toISODate(weekLater));
+  } catch (err) {
+    console.error(err);
+    return;
+  }
+  const upcoming = rows
+    .filter(a => {
+      const dt = new Date(a.datetime);
+      return dt >= now && dt <= weekLater;
+    })
+    .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+
+  if (upcoming.length === 0) {
+    reminderCard.classList.add('hidden');
+    reminderList.innerHTML = '';
+    return;
+  }
+
+  reminderCard.classList.remove('hidden');
+  reminderList.innerHTML = '';
+  for (const a of upcoming) {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'reminder-item';
+    item.dataset.date = a.datetime.slice(0, 10);
+    item.innerHTML = `
+      <span class="reminder-datetime">${escapeHtml(formatDateForPicker(a.datetime.slice(0, 10)))} <strong>${escapeHtml(a.datetime.slice(11, 16))}</strong></span>
+      <span class="reminder-title">${escapeHtml(a.title)}</span>
+      <i class="fas fa-chevron-right"></i>
+    `;
+    reminderList.appendChild(item);
+  }
+}
+
+if (calendarToggle) {
+  calendarToggle.addEventListener('click', showCalendar);
+  calendarToggle.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      showCalendar();
+    }
+  });
+}
+
+if (btnCalendarBack) {
+  btnCalendarBack.addEventListener('click', hideCalendar);
+}
+
+if (btnCalPrev) {
+  btnCalPrev.addEventListener('click', () => {
+    ensureCalendarMonth();
+    calMonth--;
+    if (calMonth < 0) {
+      calMonth = 11;
+      calYear--;
+    }
+    loadCalendar();
+  });
+}
+
+if (btnCalNext) {
+  btnCalNext.addEventListener('click', () => {
+    ensureCalendarMonth();
+    calMonth++;
+    if (calMonth > 11) {
+      calMonth = 0;
+      calYear++;
+    }
+    loadCalendar();
+  });
+}
+
+if (btnCalToday) {
+  btnCalToday.addEventListener('click', () => {
+    const now = new Date();
+    calYear = now.getFullYear();
+    calMonth = now.getMonth();
+    calSelected = toISODate(now);
+    loadCalendar();
+  });
+}
+
+if (calendarGrid) {
+  calendarGrid.addEventListener('click', (e) => {
+    const btn = e.target.closest('.cal-day');
+    if (!btn || btn.disabled || btn.classList.contains('cal-blank')) return;
+    const iso = btn.dataset.date;
+    const list = calData.get(iso) || [];
+    if (list.length === 0) {
+      // Prazan budući dan (prazni prošli su disabled) — otvori modal za unos.
+      calSelected = iso;
+      renderCalendarGrid();
+      renderCalendarDayList();
+      openAppointmentModal('create', { date: iso });
+      return;
+    }
+    // Popunjen dan (budući pastel ili prošli siv) — selektuj i prikaži listu.
+    calSelected = iso;
+    renderCalendarGrid();
+    renderCalendarDayList();
+  });
+}
+
+if (calendarDayList) {
+  calendarDayList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const id = parseInt(btn.dataset.id, 10);
+    const appt = findAppointmentById(id);
+    if (!appt) return;
+
+    if (btn.classList.contains('delete')) {
+      const confirmed = await showConfirm({
+        title: 'Brisanje termina',
+        message: `Da li si siguran da želiš da obrišeš termin "${appt.title}"?`,
+        icon: 'trash-can',
+        okText: 'Obriši',
+        danger: true
+      });
+      if (!confirmed) return;
+      try {
+        await window.api.deleteAppointment(id);
+        await loadCalendar();
+        await loadReminder();
+      } catch (err) {
+        console.error(err);
+        await showAlert({
+          title: 'Greška',
+          message: 'Došlo je do greške pri brisanju termina.',
+          icon: 'triangle-exclamation'
+        });
+      }
+    } else if (btn.classList.contains('edit')) {
+      openAppointmentModal('edit', { appt });
+    } else if (btn.classList.contains('view')) {
+      openAppointmentModal('view', { appt });
+    }
+  });
+}
+
+if (apptSaveBtn) {
+  apptSaveBtn.addEventListener('click', saveAppointment);
+}
+
+if (btnAddAppt) {
+  btnAddAppt.addEventListener('click', () => {
+    if (!calSelected || isDayPastEmpty(calSelected)) return;
+    openAppointmentModal('create', { date: calSelected });
+  });
+}
+
+if (apptCancelBtn) {
+  apptCancelBtn.addEventListener('click', closeAppointmentModal);
+}
+
+if (apptModal) {
+  apptModal.querySelector('.modal-backdrop').addEventListener('click', closeAppointmentModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !apptModal.classList.contains('hidden')) {
+      closeAppointmentModal();
+    }
+  });
+}
+
+if (reminderList) {
+  reminderList.addEventListener('click', (e) => {
+    const item = e.target.closest('.reminder-item');
+    if (!item) return;
+    openCalendarForDate(item.dataset.date);
+  });
 }
 
 (async () => {

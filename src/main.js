@@ -18,6 +18,11 @@ ipcMain.handle('get-daily-totals', (event, startDate, endDate) => db.getDailyTot
 ipcMain.handle('get-hourly-totals', (event, date) => db.getHourlyTotals(date));
 ipcMain.handle('get-day-night-split', (event, date) => db.getDayNightSplit(date));
 ipcMain.handle('get-feeding-intervals', (event, date) => db.getFeedingIntervals(date));
+ipcMain.handle('get-appointments-range', (event, startDate, endDate) => db.getAppointmentsInRange(startDate, endDate));
+ipcMain.handle('get-appointments-day', (event, date) => db.getAppointmentsForDay(date));
+ipcMain.handle('add-appointment', (event, datetime, title, description) => db.addAppointment(datetime, title, description));
+ipcMain.handle('update-appointment', (event, id, datetime, title, description) => db.updateAppointment(id, datetime, title, description));
+ipcMain.handle('delete-appointment', (event, id) => db.deleteAppointment(id));
 
 function createWindow() {
   const win = new BrowserWindow({

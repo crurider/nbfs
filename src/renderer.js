@@ -596,6 +596,9 @@ dailyGoalInput.addEventListener('change', async () => {
   }
   await window.api.setGoal(value);
   await refresh();
+  if (reportsView && !reportsView.classList.contains('hidden')) {
+    await loadReports();
+  }
 });
 
 avgPortionInput.addEventListener('change', async () => {
@@ -607,6 +610,9 @@ avgPortionInput.addEventListener('change', async () => {
   currentAvgPortion = value;
   await window.api.setAvgPortion(value);
   await refresh();
+  if (reportsView && !reportsView.classList.contains('hidden')) {
+    await loadReports();
+  }
 });
 
 btnPrev.addEventListener('click', () => changeDate(-1));
@@ -708,7 +714,8 @@ function renderBarChart(container, data, options = {}) {
     rect.setAttribute('height', Math.max(0, barH));
     rect.setAttribute('rx', 6);
     rect.setAttribute('ry', 6);
-    rect.setAttribute('fill', d.color || options.barColor || 'var(--primary)');
+    const barColor = d.color || options.barColor || 'var(--primary)';
+    rect.setAttribute('fill', barColor);
     rect.classList.add('chart-bar');
     svg.appendChild(rect);
 
@@ -717,7 +724,7 @@ function renderBarChart(container, data, options = {}) {
       valueLabel.setAttribute('x', x + barW / 2);
       valueLabel.setAttribute('y', y + 14);
       valueLabel.setAttribute('text-anchor', 'middle');
-      valueLabel.setAttribute('fill', 'white');
+      valueLabel.setAttribute('fill', `color-mix(in srgb, ${barColor} 55%, black)`);
       valueLabel.setAttribute('font-size', '11');
       valueLabel.setAttribute('font-weight', '700');
       valueLabel.textContent = d.value;
